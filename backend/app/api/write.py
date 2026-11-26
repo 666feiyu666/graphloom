@@ -40,7 +40,12 @@ def apply_batch(
     validation = validate_state(applied.state, deleted_ids=applied.deleted_ids)
     errors = applied.errors + validation.errors
     if errors:
-        raise OperationError(errors)
+        only_dependencies = all(error.get("code") == "delete_dependency" for error in errors)
+        raise OperationError(
+            errors,
+            status_code=409 if only_dependencies else 422,
+            code="dependency_conflict" if only_dependencies else "invalid_batch",
+        )
 
     changed = bool(applied.added_ids or applied.updated_ids or applied.deleted_ids)
     if changed:

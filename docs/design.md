@@ -58,7 +58,7 @@ flowchart TB
 
 | Layer | Proposed selection | Responsibility |
 | --- | --- | --- |
-| Browser | React, TypeScript, Vite | Navigation, forms, graph/table projections, change preview |
+| Browser | React, TypeScript, Vite | Navigation, forms, graph/table projections |
 | Graph rendering | Cytoscape.js (one renderer) | Selection, neighborhood display, explicit layout |
 | API | FastAPI + Pydantic v2 | Typed read/edit contracts, OpenAPI, request limits |
 | Domain | Plain Python services | Validation, atomic batches, bounded queries |
@@ -130,7 +130,7 @@ All semantic writes from the workbench go through one atomic batch endpoint: an 
 
 New objects may reference another operation's `new:` identifier in the same batch. The backend resolves temporary references, validates the whole resulting state, and either applies it all or rejects with no change. Temporary ids never persist. Reject undefined or duplicate temporary references and conflicting multiple writes to one object.
 
-The UI saves an ordinary form edit as one batch without an approval dialog; show a diff preview for bulk edits. There is no prepare/commit ceremony, no idempotency key, and no revision-conflict handling — a single local user. A failed batch leaves the file and `version` unchanged.
+The UI saves an ordinary form edit as one batch without an approval dialog. There is no prepare/commit ceremony, no idempotency key, and no revision-conflict handling — a single local user. A failed batch leaves the file and `version` unchanged.
 
 The previous saved file is kept as `.bak` as a crash-safety net, not a snapshot feature. Server-side undo and history are deferred; the UI may keep an in-memory undo for unsaved form edits.
 
@@ -169,7 +169,6 @@ Three-pane layout: project/object explorer on the left, graph or table in the ce
 - **Instance mode:** instances and typed assertions. Selecting a class filters its instances; literal values appear in the inspector/table rather than cluttering the canvas.
 - **Table alternative:** searchable object rows expose the same operations without canvas gestures.
 - **Editor:** create/edit definitions and instances, choose reference targets from existing ids, show warnings inline. Connecting two instances opens a relation-type selector; canvas gestures never determine semantics automatically.
-- **Change preview:** distinguish additions, removals, and updates; show affected references and warnings; Allow Apply or Discard.
 - **Read-access preview:** show the exact structured data the read endpoint returns for the current selection, so the researcher can verify what an agent would read without invoking a model.
 
 Keep Cytoscape behind a `GraphCanvas` adapter that receives a projection and emits selection/edit intentions; forms and API objects never depend on Cytoscape internals. Run layout only on initial display or explicit request; saved edits must not reset zoom or rearrange the canvas. Poll the project `version` while the tab is active and refetch affected queries on change or focus. When a bounded projection hides data, show the hidden/truncated count.

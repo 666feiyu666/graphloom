@@ -18,12 +18,17 @@ from .objects import (
 
 
 class OperationError(Exception):
-    status_code = 422
-    code = "invalid_batch"
-
-    def __init__(self, errors: list[dict]) -> None:
-        super().__init__("The batch has structural errors and was not applied")
+    def __init__(
+        self,
+        errors: list[dict],
+        *,
+        status_code: int = 422,
+        code: str = "invalid_batch",
+    ) -> None:
+        super().__init__("The batch was rejected and not applied")
         self.errors = errors
+        self.status_code = status_code
+        self.code = code
 
 
 class CreateOperation(BaseModel):

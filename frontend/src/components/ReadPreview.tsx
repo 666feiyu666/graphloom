@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 import { ApiError, api } from "../api/client";
 
-type ReadView = "object" | "state" | "schema" | "instances";
+type ReadView = "object" | "neighborhood" | "references" | "state" | "schema" | "instances";
 
 interface Props {
   projectId: string;
   selectedId: string | null;
 }
 
-const VIEWS: { value: ReadView; label: string }[] = [
-  { value: "object", label: "Selected object" },
+const VIEWS: { value: ReadView; label: string; needsSelection?: boolean }[] = [
+  { value: "object", label: "Selected object", needsSelection: true },
+  { value: "neighborhood", label: "Neighborhood", needsSelection: true },
+  { value: "references", label: "References", needsSelection: true },
   { value: "state", label: "Full state" },
   { value: "schema", label: "Schema" },
   { value: "instances", label: "Instances page" },
@@ -23,14 +25,15 @@ export default function ReadPreview({ projectId, selectedId }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (selectedId && view === "object") return;
-    if (!selectedId && view === "object") setView("state");
+    const needsSelection = VIEWS.find((item) => item.value === view)?.needsSelection;
+    if (needsSelection && !selectedId) setView("state");
   }, [selectedId, view]);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (view === "object" && !selectedId) {
+      const needsSelection = VIEWS.find((item) => item.value === view)?.needsSelection;
+      if (needsSelection && !selectedId) {
         setPayload(null);
         setEndpoint("");
         return;
@@ -43,6 +46,12 @@ export default function ReadPreview({ projectId, selectedId }: Props) {
         if (view === "object" && selectedId) {
           path = `/projects/${projectId}/objects/${selectedId}`;
           next = await api.getObject(projectId, selectedId);
+        } else if (view === "neighborhood" && selectedId) {
+          path = `/projects/${projectId}/neighborhood?id=${selectedId}&depth=1`;
+          next = await api.neighborhood(projectId, selectedId, 1);
+        } else if (view === "references" && selectedId) {
+          path = `/projects/${projectId}/references?id=${selectedId}`;
+          next = await api.references(projectId, selectedId);
         } else if (view === "schema") {
           path = `/projects/${projectId}/schema`;
           next = await api.getSchema(projectId);
@@ -86,7 +95,7 @@ export default function ReadPreview({ projectId, selectedId }: Props) {
             key={item.value}
             className={view === item.value ? "is-active" : ""}
             onClick={() => setView(item.value)}
-            disabled={item.value === "object" && !selectedId}
+            disabled={item.needsSelection && !selectedId}
           >
             {item.label}
           </button>

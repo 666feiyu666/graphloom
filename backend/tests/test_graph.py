@@ -325,7 +325,8 @@ def test_delete_dependency_is_explicit(client, project_id):
     state = client.get(f"/api/v1/projects/{project_id}/state").json()
     class_id = next(obj["id"] for obj in state["objects"] if obj["kind"] == "class")
     response = apply(client, project_id, [{"op": "delete", "id": class_id}])
-    assert response.status_code == 422
+    assert response.status_code == 409
+    assert response.json()["error"]["code"] == "dependency_conflict"
     errors = response.json()["error"]["details"]["errors"]
     dependency_errors = [error for error in errors if error["code"] == "delete_dependency"]
     assert dependency_errors
