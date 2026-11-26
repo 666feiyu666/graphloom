@@ -5,7 +5,6 @@ from dataclasses import dataclass, field
 from typing import Any, Iterable
 
 from .graph import (
-    class_children,
     descendant_classes,
     display_label,
     instance_class_ids,
@@ -20,7 +19,6 @@ from .objects import (
     InstanceObject,
     RelationObject,
     RelationTypeObject,
-    SourceRefObject,
     validate_value_type,
 )
 
@@ -255,7 +253,7 @@ def validate_state(
                                 details={"relation_type_id": str(relation_type.id)},
                             )
                         )
-                if relation_type.lifecycle == "deprecated":
+                if relation_type.status == "deprecated":
                     result.warnings.append(
                         _issue(
                             "deprecated_definition",
@@ -281,7 +279,7 @@ def validate_state(
                                 details={"attribute_type_id": str(attribute_type.id)},
                             )
                         )
-                if attribute_type.lifecycle == "deprecated":
+                if attribute_type.status == "deprecated":
                     result.warnings.append(
                         _issue(
                             "deprecated_definition",
@@ -295,7 +293,7 @@ def validate_state(
         if isinstance(obj, InstanceObject):
             for class_id in obj.class_ids:
                 class_obj = objects.get(str(class_id))
-                if isinstance(class_obj, ClassObject) and class_obj.lifecycle == "deprecated":
+                if isinstance(class_obj, ClassObject) and class_obj.status == "deprecated":
                     result.warnings.append(
                         _issue(
                             "deprecated_definition",
@@ -350,112 +348,3 @@ def _find_class_cycle(state) -> list[str] | None:
         if found:
             return found
     return None
-
-
-def warning_signature(warning: dict) -> str:
-    return "|".join(
-        [
-            warning.get("code", ""),
-            warning.get("object_id", ""),
-            warning.get("field", ""),
-        ]
-    )
-
-
-def compute_impact(before, after, touched_ids: Iterable[str]) -> dict:
-    before_map = object_map(before)
-    after_map = object_map(after)
-    touched = {str(item) for item in touched_ids}
-    impacted: set[str] = set(touched)
-
-    for object_id in list(touched):
-        obj = after_map.get(object_id) or before_map.get(object_id)
-        if obj is None:
-            continue
-        for item in references_to(after, object_id) + references_to(before, object_id):
-            impacted.add(item["object_id"])
-
-        if isinstance(obj, ClassObject):
-            classes = descendant_classes(after, object_id) | descendant_classes(before, object_id)
-            for other in list(after.objects) + list(before.objects):
-                if isinstance(other, InstanceObject) and instance_class_ids(other) & classes:
-                    impacted.add(str(other.id))
-                elif isinstance(other, RelationTypeObject) and (
-                    {str(x) for x in other.domain_ids + other.range_ids} & classes
-                ):
-                    impacted.add(str(other.id))
-                elif isinstance(other, AttributeTypeObject) and (
-                    {str(x) for x in other.domain_ids} & classes
-                ):
-                    impacted.add(str(other.id))
-
-        if isinstance(obj, RelationTypeObject):
-            for other in list(after.objects) + list(before.objects):
-                if isinstance(other, RelationObject) and str(other.relation_type_id) == object_id:
-                    impacted.add(str(other.id))
-
-        if isinstance(obj, AttributeTypeObject):
-            for other in list(after.objects) + list(before.objects):
-                if (
-                    isinstance(other, AttributeValueObject)
-                    and str(other.attribute_type_id) == object_id
-                ):
-                    impacted.add(str(other.id))
-
-        if isinstance(obj, InstanceObject):
-            for other in list(after.objects) + list(before.objects):
-                if isinstance(other, RelationObject) and object_id in {
-                    str(other.source_id),
-                    str(other.target_id),
-                }:
-                    impacted.add(str(other.id))
-                elif isinstance(other, AttributeValueObject) and str(other.subject_id) == object_id:
-                    impacted.add(str(other.id))
-
-        if isinstance(obj, SourceRefObject):
-            for other in list(after.objects) + list(before.objects):
-                if object_id in {str(item) for item in other.source_ref_ids}:
-                    impacted.add(str(other.id))
-
-    # Expand once more so that assertions attached to impacted instances and
-    # relations of impacted relation types are visible in the preview.
-    for object_id in list(impacted):
-        obj = after_map.get(object_id) or before_map.get(object_id)
-        if isinstance(obj, InstanceObject):
-            for other in list(after.objects) + list(before.objects):
-                if isinstance(other, RelationObject) and object_id in {
-                    str(other.source_id),
-                    str(other.target_id),
-                }:
-                    impacted.add(str(other.id))
-                elif isinstance(other, AttributeValueObject) and str(other.subject_id) == object_id:
-                    impacted.add(str(other.id))
-        if isinstance(obj, RelationTypeObject):
-            for other in list(after.objects) + list(before.objects):
-                if isinstance(other, RelationObject) and str(other.relation_type_id) == object_id:
-                    impacted.add(str(other.id))
-
-    existing = set(after_map) | set(before_map)
-    impacted &= existing
-
-    before_warnings = {warning_signature(item) for item in validate_state(before).warnings}
-    after_warnings = {warning_signature(item) for item in validate_state(after).warnings}
-
-    return {
-        "object_ids": sorted(impacted),
-        "instance_ids": sorted(
-            object_id for object_id in impacted if getattr(after_map.get(object_id), "kind", None) == "instance"
-            or getattr(before_map.get(object_id), "kind", None) == "instance"
-        ),
-        "assertion_ids": sorted(
-            object_id
-            for object_id in impacted
-            if getattr(after_map.get(object_id), "kind", None)
-            in {"relation", "attribute_value"}
-            or getattr(before_map.get(object_id), "kind", None)
-            in {"relation", "attribute_value"}
-        ),
-        "warning_counts": {"before": len(before_warnings), "after": len(after_warnings)},
-        "warnings_added": sorted(after_warnings - before_warnings),
-        "warnings_removed": sorted(before_warnings - after_warnings),
-    }

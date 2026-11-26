@@ -51,8 +51,7 @@ export function defaultValues(kind: string): Record<string, unknown> {
   const common = {
     notes: "",
     source_ref_ids: [] as string[],
-    review_status: "proposed",
-    lifecycle: "active",
+    status: "active",
   };
   switch (kind) {
     case "class":
@@ -111,8 +110,7 @@ export function valuesFromObject(object: GraphObject): Record<string, unknown> {
   const common = {
     notes: object.notes,
     source_ref_ids: [...object.source_ref_ids],
-    review_status: object.review_status,
-    lifecycle: object.lifecycle,
+    status: object.status,
   };
   switch (object.kind) {
     case "class":
@@ -182,8 +180,7 @@ function baseNamed(values: Record<string, unknown>) {
     aliases: splitAliases(values.aliases),
     notes: String(values.notes ?? ""),
     source_ref_ids: (values.source_ref_ids as string[]) ?? [],
-    review_status: values.review_status ?? "proposed",
-    lifecycle: values.lifecycle ?? "active",
+    status: values.status ?? "active",
   };
 }
 
@@ -191,8 +188,7 @@ function baseAssertion(values: Record<string, unknown>) {
   return {
     notes: String(values.notes ?? ""),
     source_ref_ids: (values.source_ref_ids as string[]) ?? [],
-    review_status: values.review_status ?? "proposed",
-    lifecycle: values.lifecycle ?? "active",
+    status: values.status ?? "active",
   };
 }
 
@@ -203,10 +199,7 @@ export function draftToCreateData(
 ): Record<string, unknown> {
   switch (kind) {
     case "class":
-      return {
-        ...baseNamed(values),
-        parent_ids: (values.parent_ids as string[]) ?? [],
-      };
+      return { ...baseNamed(values), parent_ids: (values.parent_ids as string[]) ?? [] };
     case "relation_type":
       return {
         ...baseNamed(values),
@@ -220,10 +213,7 @@ export function draftToCreateData(
         value_type: values.value_type ?? "string",
       };
     case "instance":
-      return {
-        ...baseNamed(values),
-        class_ids: (values.class_ids as string[]) ?? [],
-      };
+      return { ...baseNamed(values), class_ids: (values.class_ids as string[]) ?? [] };
     case "relation":
       return {
         ...baseAssertion(values),
@@ -249,8 +239,7 @@ export function draftToCreateData(
         evidence_state: values.evidence_state ?? "unverified",
         notes: String(values.notes ?? ""),
         source_ref_ids: (values.source_ref_ids as string[]) ?? [],
-        review_status: values.review_status ?? "proposed",
-        lifecycle: values.lifecycle ?? "active",
+        status: values.status ?? "active",
       };
     default:
       return { ...values };
@@ -287,8 +276,7 @@ export function draftToUpdateFields(
     assign("evidence_state", values.evidence_state ?? "unverified");
     assign("notes", String(values.notes ?? ""));
     assign("source_ref_ids", values.source_ref_ids ?? []);
-    assign("review_status", values.review_status ?? "proposed");
-    assign("lifecycle", values.lifecycle ?? "active");
+    assign("status", values.status ?? "active");
     return fields;
   }
 
@@ -304,8 +292,7 @@ export function draftToUpdateFields(
     }
     assign("notes", String(values.notes ?? ""));
     assign("source_ref_ids", values.source_ref_ids ?? []);
-    assign("review_status", values.review_status ?? "proposed");
-    assign("lifecycle", values.lifecycle ?? "active");
+    assign("status", values.status ?? "active");
     return fields;
   }
 
@@ -315,8 +302,7 @@ export function draftToUpdateFields(
     assign("aliases", splitAliases(values.aliases));
     assign("notes", String(values.notes ?? ""));
     assign("source_ref_ids", values.source_ref_ids ?? []);
-    assign("review_status", values.review_status ?? "proposed");
-    assign("lifecycle", values.lifecycle ?? "active");
+    assign("status", values.status ?? "active");
     if (kind === "class") assign("parent_ids", values.parent_ids ?? []);
     if (kind === "relation_type") {
       assign("domain_ids", values.domain_ids ?? []);

@@ -17,13 +17,12 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    db_path: Path = Field(default_factory=lambda: GRAPHLOOM_DIR / ".local" / "graphloom.db")
+    data_dir: Path = Field(default_factory=lambda: GRAPHLOOM_DIR / ".local" / "projects")
     allowed_origins: str = "http://127.0.0.1:5173,http://localhost:5173"
     max_body_bytes: int = 10 * 1024 * 1024
-    rate_limit_per_minute: int = 1200
     frontend_dist: Path = Field(default_factory=lambda: GRAPHLOOM_DIR / "frontend" / "dist")
 
-    @field_validator("db_path", "frontend_dist", mode="after")
+    @field_validator("data_dir", "frontend_dist", mode="after")
     @classmethod
     def _resolve_runtime_path(cls, value: Path) -> Path:
         return value if value.is_absolute() else GRAPHLOOM_DIR / value

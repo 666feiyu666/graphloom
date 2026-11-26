@@ -4,9 +4,7 @@ import { ApiError, api } from "../api/client";
 type ReadView = "object" | "state" | "schema" | "instances";
 
 interface Props {
-  token: string;
   projectId: string;
-  revision: number;
   selectedId: string | null;
 }
 
@@ -17,7 +15,7 @@ const VIEWS: { value: ReadView; label: string }[] = [
   { value: "instances", label: "Instances page" },
 ];
 
-export default function ReadPreview({ token, projectId, revision, selectedId }: Props) {
+export default function ReadPreview({ projectId, selectedId }: Props) {
   const [view, setView] = useState<ReadView>(selectedId ? "object" : "state");
   const [payload, setPayload] = useState<unknown>(null);
   const [endpoint, setEndpoint] = useState("");
@@ -43,21 +41,17 @@ export default function ReadPreview({ token, projectId, revision, selectedId }: 
         let next: unknown;
         let path: string;
         if (view === "object" && selectedId) {
-          path = `/projects/${projectId}/objects/${selectedId}?revision=${revision}`;
-          next = await api.getObject(token, projectId, selectedId, revision);
+          path = `/projects/${projectId}/objects/${selectedId}`;
+          next = await api.getObject(projectId, selectedId);
         } else if (view === "schema") {
-          path = `/projects/${projectId}/schema?revision=${revision}`;
-          next = await api.getSchema(token, projectId, revision);
+          path = `/projects/${projectId}/schema`;
+          next = await api.getSchema(projectId);
         } else if (view === "instances") {
-          path = `/projects/${projectId}/objects?kind=instance&revision=${revision}&limit=100`;
-          next = await api.getObjects(token, projectId, {
-            kind: "instance",
-            revision,
-            limit: 100,
-          });
+          path = `/projects/${projectId}/objects?kind=instance&limit=100`;
+          next = await api.getObjects(projectId, { kind: "instance", limit: 100 });
         } else {
-          path = `/projects/${projectId}/state?revision=${revision}`;
-          next = await api.getState(token, projectId, revision);
+          path = `/projects/${projectId}/state`;
+          next = await api.getState(projectId);
         }
         if (!cancelled) {
           setPayload(next);
@@ -79,13 +73,12 @@ export default function ReadPreview({ token, projectId, revision, selectedId }: 
     return () => {
       cancelled = true;
     };
-  }, [token, projectId, revision, selectedId, view]);
+  }, [projectId, selectedId, view]);
 
   return (
-    <section className="read-preview" aria-label="Read access preview">
+    <section className="read-preview" aria-label="Read preview">
       <div className="drawer-section-head">
         <h3>Reader view</h3>
-        <span className="revision-badge">pinned r{revision}</span>
       </div>
       <div className="read-tabs">
         {VIEWS.map((item) => (
@@ -100,21 +93,13 @@ export default function ReadPreview({ token, projectId, revision, selectedId }: 
         ))}
       </div>
       <p className="fine-print">
-        This preview calls the actual read endpoints, not a separately maintained sample.
-        Unsaved forms, pending change sets, layouts, and credentials are excluded.
+        This preview calls the actual read endpoints, not a separately maintained sample. Unsaved
+        forms and layouts are excluded.
       </p>
       {endpoint && <code className="endpoint-line">GET /api/v1{endpoint}</code>}
       {loading && <p className="muted">Reading…</p>}
       {error && <p className="form-error">{error}</p>}
-      {payload !== null && (
-        <pre className="read-json">{JSON.stringify(payload, null, 2)}</pre>
-      )}
-      <p className="fine-print">
-        Reader-only OpenAPI:{" "}
-        <a href="/api/v1/openapi.reader.json" target="_blank" rel="noreferrer">
-          /api/v1/openapi.reader.json
-        </a>
-      </p>
+      {payload !== null && <pre className="read-json">{JSON.stringify(payload, null, 2)}</pre>}
     </section>
   );
 }

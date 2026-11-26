@@ -7,7 +7,7 @@ import type {
   SourceRefObject,
 } from "../api/types";
 import { descendantClassIds, objectLabel } from "../projections/graph";
-import type { Mode } from "../store/ui";
+import type { Mode } from "../ui";
 
 interface Props {
   state: GraphState;

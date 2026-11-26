@@ -1,20 +1,15 @@
 import type {
+  BatchResult,
   Capabilities,
-  ChangeSet,
-  CommitResult,
-  Credential,
-  CredentialsResponse,
   GraphObject,
   GraphState,
   Kind,
+  LayoutData,
   LayoutResponse,
-  NativeExport,
   ObjectsResponse,
+  Operation,
   ProjectSummary,
-  RevisionsResponse,
   SchemaResponse,
-  Snapshot,
-  SnapshotsResponse,
 } from "./types";
 
 const API = "/api/v1";
@@ -53,16 +48,11 @@ function qs(params: Record<string, QueryValue>): string {
   return encoded ? `?${encoded}` : "";
 }
 
-async function request<T>(
-  token: string,
-  path: string,
-  init: RequestInit = {},
-): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   if (!headers.has("Content-Type") && init.body !== undefined) {
     headers.set("Content-Type", "application/json");
   }
-  if (token) headers.set("Authorization", `Bearer ${token}`);
   const response = await fetch(`${API}${path}`, { ...init, headers });
   const text = await response.text();
   let body: unknown = null;
@@ -75,7 +65,14 @@ async function request<T>(
   }
   if (!response.ok) {
     const envelope = body as
-      | { error?: { code?: string; message?: string; details?: Record<string, unknown> }; request_id?: string }
+      | {
+          error?: {
+            code?: string;
+            message?: string;
+            details?: Record<string, unknown>;
+          };
+          request_id?: string;
+        }
       | null;
     throw new ApiError(
       response.status,
@@ -89,204 +86,66 @@ async function request<T>(
 }
 
 export const api = {
-  capabilities: (token: string) => request<Capabilities>(token, "/capabilities"),
+  capabilities: () => request<Capabilities>("/capabilities"),
 
-  listProjects: (token: string) =>
-    request<{ projects: ProjectSummary[] }>(token, "/projects"),
+  listProjects: () => request<{ projects: ProjectSummary[] }>("/projects"),
 
-  createProject: (token: string, name: string, description: string) =>
-    request<ProjectSummary>(token, "/projects", {
+  createProject: (name: string, description: string) =>
+    request<ProjectSummary>("/projects", {
       method: "POST",
       body: JSON.stringify({ name, description }),
     }),
 
-  getProject: (token: string, projectId: string) =>
-    request<ProjectSummary>(token, `/projects/${projectId}`),
+  getProject: (projectId: string) =>
+    request<ProjectSummary>(`/projects/${projectId}`),
 
-  getState: (token: string, projectId: string, revision?: number) =>
-    request<GraphState>(
-      token,
-      `/projects/${projectId}/state${qs({ revision })}`,
-    ),
+  getState: (projectId: string) =>
+    request<GraphState>(`/projects/${projectId}/state`),
 
-  getSchema: (token: string, projectId: string, revision?: number) =>
-    request<SchemaResponse>(
-      token,
-      `/projects/${projectId}/schema${qs({ revision })}`,
-    ),
+  getSchema: (projectId: string) =>
+    request<SchemaResponse>(`/projects/${projectId}/schema`),
 
   getObjects: (
-    token: string,
     projectId: string,
-    params: {
-      kind?: Kind;
-      q?: string;
-      cursor?: string | null;
-      revision?: number;
-      limit?: number;
-    },
+    params: { kind?: Kind; q?: string; cursor?: string | null; limit?: number },
   ) =>
-    request<ObjectsResponse>(
-      token,
-      `/projects/${projectId}/objects${qs(params)}`,
+    request<ObjectsResponse>(`/projects/${projectId}/objects${qs(params)}`),
+
+  getObject: (projectId: string, objectId: string) =>
+    request<{ project_id: string; version: number; object: GraphObject }>(
+      `/projects/${projectId}/objects/${objectId}`,
     ),
 
-  getObject: (token: string, projectId: string, objectId: string, revision?: number) =>
-    request<{ project_id: string; revision: number; object: GraphObject }>(
-      token,
-      `/projects/${projectId}/objects/${objectId}${qs({ revision })}`,
+  neighborhood: (projectId: string, objectId: string, depth = 1) =>
+    request<Record<string, unknown>>(
+      `/projects/${projectId}/neighborhood${qs({ id: objectId, depth })}`,
     ),
 
-  query: (
-    token: string,
-    projectId: string,
-    body: Record<string, unknown>,
-  ) =>
-    request<Record<string, unknown>>(token, `/projects/${projectId}/query`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-
-  getRevisions: (token: string, projectId: string, after = 0, limit = 100) =>
-    request<RevisionsResponse>(
-      token,
-      `/projects/${projectId}/revisions${qs({ after, limit })}`,
-    ),
-
-  getDiff: (token: string, projectId: string, from: number, to: number) =>
-    request<{ project_id: string; from_revision: number; to_revision: number; diff: unknown }>(
-      token,
-      `/projects/${projectId}/diff${qs({ from, to })}`,
-    ),
-
-  listSnapshots: (token: string, projectId: string) =>
-    request<SnapshotsResponse>(token, `/projects/${projectId}/snapshots`),
-
-  createSnapshot: (token: string, projectId: string, name: string, revision?: number) =>
-    request<Snapshot>(token, `/projects/${projectId}/snapshots`, {
-      method: "POST",
-      body: JSON.stringify({ name, revision }),
-    }),
-
-  restorePreview: (token: string, projectId: string, snapshotId: string, reason = "") =>
-    request<ChangeSet>(
-      token,
-      `/projects/${projectId}/snapshots/${snapshotId}/restore-preview`,
-      {
-        method: "POST",
-        body: JSON.stringify({ reason }),
-      },
-    ),
-
-  restoreRevisionPreview: (
-    token: string,
-    projectId: string,
-    revision: number,
-    reason = "",
-  ) =>
-    request<ChangeSet>(
-      token,
-      `/projects/${projectId}/revisions/${revision}/restore-preview`,
-      {
-        method: "POST",
-        body: JSON.stringify({ reason }),
-      },
-    ),
-
-  importPreview: (token: string, projectId: string, payload: unknown) =>
-    request<ChangeSet>(token, `/projects/${projectId}/import-preview`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  exportNative: (token: string, projectId: string, revision?: number, includeLayout = false) =>
-    request<NativeExport>(
-      token,
-      `/projects/${projectId}/export${qs({
-        format: "native-json",
-        revision,
-        include_layout: includeLayout,
+  instances: (projectId: string, classId: string, includeDescendants = true) =>
+    request<Record<string, unknown>>(
+      `/projects/${projectId}/instances${qs({
+        class_id: classId,
+        include_descendants: includeDescendants,
       })}`,
     ),
 
-  exportTurtle: async (token: string, projectId: string, revision?: number) => {
-    const headers = new Headers();
-    if (token) headers.set("Authorization", `Bearer ${token}`);
-    const response = await fetch(
-      `${API}/projects/${projectId}/export${qs({ format: "turtle", revision })}`,
-      { headers },
-    );
-    if (!response.ok) {
-      throw new ApiError(response.status, "export_failed", "RDF export failed");
-    }
-    return response.text();
-  },
+  references: (projectId: string, objectId: string) =>
+    request<Record<string, unknown>>(
+      `/projects/${projectId}/references${qs({ id: objectId })}`,
+    ),
 
-  getLayout: (token: string, projectId: string) =>
-    request<LayoutResponse>(token, `/projects/${projectId}/layout`),
+  applyBatch: (projectId: string, operations: Operation[]) =>
+    request<BatchResult>(`/projects/${projectId}/batch`, {
+      method: "POST",
+      body: JSON.stringify({ operations }),
+    }),
 
-  putLayout: (
-    token: string,
-    projectId: string,
-    expectedVersion: number,
-    data: Record<string, unknown>,
-  ) =>
-    request<LayoutResponse>(token, `/projects/${projectId}/layout`, {
+  getLayout: (projectId: string) =>
+    request<LayoutResponse>(`/projects/${projectId}/layout`),
+
+  putLayout: (projectId: string, data: LayoutData) =>
+    request<LayoutResponse>(`/projects/${projectId}/layout`, {
       method: "PUT",
-      body: JSON.stringify({ expected_version: expectedVersion, data }),
-    }),
-
-  prepareChangeSet: (
-    token: string,
-    projectId: string,
-    body: {
-      base_revision: number;
-      reason: string;
-      operations: unknown[];
-    },
-  ) =>
-    request<ChangeSet>(token, `/projects/${projectId}/change-sets`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-
-  getChangeSet: (token: string, projectId: string, changeSetId: string) =>
-    request<ChangeSet>(
-      token,
-      `/projects/${projectId}/change-sets/${changeSetId}`,
-    ),
-
-  commitChangeSet: (
-    token: string,
-    projectId: string,
-    changeSetId: string,
-    expectedRevision: number,
-  ) =>
-    request<CommitResult>(
-      token,
-      `/projects/${projectId}/change-sets/${changeSetId}/commit`,
-      {
-        method: "POST",
-        headers: { "Idempotency-Key": crypto.randomUUID() },
-        body: JSON.stringify({ expected_revision: expectedRevision }),
-      },
-    ),
-
-  listCredentials: (token: string) =>
-    request<CredentialsResponse>(token, "/credentials"),
-
-  createReaderCredential: (
-    token: string,
-    label: string,
-    projectIds: string[],
-  ) =>
-    request<Credential>(token, "/credentials", {
-      method: "POST",
-      body: JSON.stringify({ label, project_ids: projectIds }),
-    }),
-
-  deleteCredential: (token: string, credentialId: string) =>
-    request<Credential>(token, `/credentials/${credentialId}`, {
-      method: "DELETE",
+      body: JSON.stringify({ data }),
     }),
 };

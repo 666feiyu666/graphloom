@@ -6,11 +6,7 @@ const base = {
   project_id: "project-1",
   created_at: "2026-01-01T00:00:00Z",
   updated_at: "2026-01-01T00:00:00Z",
-  created_by: "owner",
-  updated_by: "owner",
-  origin: "human" as const,
-  review_status: "proposed" as const,
-  lifecycle: "active" as const,
+  status: "active" as const,
   notes: "",
   source_ref_ids: [],
 };

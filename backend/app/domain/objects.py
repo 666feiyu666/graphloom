@@ -15,9 +15,7 @@ Kind = Literal[
     "attribute_value",
     "source_ref",
 ]
-Origin = Literal["human", "import"]
-ReviewStatus = Literal["proposed", "accepted", "questioned"]
-Lifecycle = Literal["active", "deprecated"]
+Status = Literal["active", "deprecated"]
 EvidenceState = Literal[
     "discovered",
     "bibliographically_verified",
@@ -50,11 +48,7 @@ class StoredBase(BaseModel):
     project_id: UUID
     created_at: datetime
     updated_at: datetime
-    created_by: str
-    updated_by: str
-    origin: Origin = "human"
-    review_status: ReviewStatus = "proposed"
-    lifecycle: Lifecycle = "active"
+    status: Status = "active"
     notes: str = ""
     source_ref_ids: list[UUID] = Field(default_factory=list)
 
@@ -136,8 +130,7 @@ class NamedData(BaseModel):
     aliases: list[str] = Field(default_factory=list)
     notes: str = ""
     source_ref_ids: list[str] = Field(default_factory=list)
-    review_status: ReviewStatus = "proposed"
-    lifecycle: Lifecycle = "active"
+    status: Status = "active"
 
 
 class ClassData(NamedData):
@@ -162,8 +155,7 @@ class AssertionData(BaseModel):
     model_config = ConfigDict(extra="forbid")
     notes: str = ""
     source_ref_ids: list[str] = Field(default_factory=list)
-    review_status: ReviewStatus = "proposed"
-    lifecycle: Lifecycle = "active"
+    status: Status = "active"
 
 
 class RelationData(AssertionData):
@@ -186,8 +178,7 @@ class SourceRefData(BaseModel):
     evidence_state: EvidenceState = "unverified"
     notes: str = ""
     source_ref_ids: list[str] = Field(default_factory=list)
-    review_status: ReviewStatus = "proposed"
-    lifecycle: Lifecycle = "active"
+    status: Status = "active"
 
 
 DATA_MODELS: dict[str, type[BaseModel]] = {
@@ -230,8 +221,7 @@ class ClassUpdate(BaseModel):
     parent_ids: list[str] | None = None
     notes: str | None = None
     source_ref_ids: list[str] | None = None
-    review_status: ReviewStatus | None = None
-    lifecycle: Lifecycle | None = None
+    status: Status | None = None
 
 
 class RelationTypeUpdate(BaseModel):
@@ -243,8 +233,7 @@ class RelationTypeUpdate(BaseModel):
     range_ids: list[str] | None = None
     notes: str | None = None
     source_ref_ids: list[str] | None = None
-    review_status: ReviewStatus | None = None
-    lifecycle: Lifecycle | None = None
+    status: Status | None = None
 
 
 class AttributeTypeUpdate(BaseModel):
@@ -256,8 +245,7 @@ class AttributeTypeUpdate(BaseModel):
     value_type: ValueType | None = None
     notes: str | None = None
     source_ref_ids: list[str] | None = None
-    review_status: ReviewStatus | None = None
-    lifecycle: Lifecycle | None = None
+    status: Status | None = None
 
 
 class InstanceUpdate(BaseModel):
@@ -268,8 +256,7 @@ class InstanceUpdate(BaseModel):
     class_ids: list[str] | None = None
     notes: str | None = None
     source_ref_ids: list[str] | None = None
-    review_status: ReviewStatus | None = None
-    lifecycle: Lifecycle | None = None
+    status: Status | None = None
 
 
 class RelationUpdate(BaseModel):
@@ -279,8 +266,7 @@ class RelationUpdate(BaseModel):
     target_id: str | None = None
     notes: str | None = None
     source_ref_ids: list[str] | None = None
-    review_status: ReviewStatus | None = None
-    lifecycle: Lifecycle | None = None
+    status: Status | None = None
 
 
 class AttributeValueUpdate(BaseModel):
@@ -290,8 +276,7 @@ class AttributeValueUpdate(BaseModel):
     value: Any = None
     notes: str | None = None
     source_ref_ids: list[str] | None = None
-    review_status: ReviewStatus | None = None
-    lifecycle: Lifecycle | None = None
+    status: Status | None = None
 
 
 class SourceRefUpdate(BaseModel):
@@ -302,8 +287,7 @@ class SourceRefUpdate(BaseModel):
     evidence_state: EvidenceState | None = None
     notes: str | None = None
     source_ref_ids: list[str] | None = None
-    review_status: ReviewStatus | None = None
-    lifecycle: Lifecycle | None = None
+    status: Status | None = None
 
 
 UPDATE_MODELS: dict[str, type[BaseModel]] = {
@@ -336,9 +320,7 @@ def build_object(
     object_id: UUID,
     project_id: UUID,
     data: BaseModel,
-    actor: str,
     *,
-    origin: Origin = "human",
     now: datetime | None = None,
 ) -> BaseModel:
     model = OBJECT_MODELS[kind]
@@ -352,9 +334,6 @@ def build_object(
             "kind": kind,
             "created_at": stamp,
             "updated_at": stamp,
-            "created_by": actor,
-            "updated_by": actor,
-            "origin": origin,
         }
     )
 
@@ -362,7 +341,6 @@ def build_object(
 def apply_update(
     obj: BaseModel,
     fields: dict[str, Any],
-    actor: str,
     *,
     now: datetime | None = None,
 ) -> BaseModel:
@@ -383,7 +361,6 @@ def apply_update(
     merged = obj.model_dump(mode="json")
     merged.update(cleaned)
     merged["updated_at"] = (now or utcnow()).isoformat()
-    merged["updated_by"] = actor
     return OBJECT_MODELS[kind].model_validate(merged)
 
 

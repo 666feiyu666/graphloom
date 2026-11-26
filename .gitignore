@@ -1,10 +1,6 @@
-# Graphloom runtime data and secrets
+# Graphloom runtime data
 .local/
 .env
-*.db
-*.db-wal
-*.db-shm
-*.sqlite
 
 # Python
 backend/.venv/
@@ -17,9 +13,7 @@ htmlcov/
 # Node / frontend
 frontend/node_modules/
 frontend/dist/
-frontend/.e2e/
 frontend/test-results/
-frontend/playwright-report/
 frontend/.vite/
 
 # OS

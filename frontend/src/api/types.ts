@@ -7,9 +7,7 @@ export type Kind =
   | "attribute_value"
   | "source_ref";
 
-export type ReviewStatus = "proposed" | "accepted" | "questioned";
-export type Lifecycle = "active" | "deprecated";
-export type Origin = "human" | "import";
+export type Status = "active" | "deprecated";
 export type EvidenceState =
   | "discovered"
   | "bibliographically_verified"
@@ -32,11 +30,7 @@ export interface BaseObject {
   kind: Kind;
   created_at: string;
   updated_at: string;
-  created_by: string;
-  updated_by: string;
-  origin: Origin;
-  review_status: ReviewStatus;
-  lifecycle: Lifecycle;
+  status: Status;
   notes: string;
   source_ref_ids: string[];
 }
@@ -112,7 +106,8 @@ export interface ProjectSummary {
   id: string;
   name: string;
   description: string;
-  current_revision: number;
+  version: number;
+  saved_at: string | null;
   created_at: string | null;
   updated_at: string | null;
   counts: ProjectCounts;
@@ -122,7 +117,8 @@ export interface GraphState {
   format_version: number;
   project_id: string;
   project_name: string;
-  revision: number;
+  version: number;
+  saved_at: string | null;
   objects: GraphObject[];
 }
 
@@ -136,7 +132,7 @@ export interface Warning {
 
 export interface SchemaResponse {
   project_id: string;
-  revision: number;
+  version: number;
   classes: ClassObject[];
   relation_types: RelationTypeObject[];
   attribute_types: AttributeTypeObject[];
@@ -152,7 +148,7 @@ export interface SchemaResponse {
 
 export interface ObjectsResponse {
   project_id: string;
-  revision: number;
+  version: number;
   kind: Kind | null;
   q: string;
   objects: GraphObject[];
@@ -163,11 +159,8 @@ export interface ObjectsResponse {
 }
 
 export interface Capabilities {
-  role: "owner" | "reader";
-  actor: string;
-  read_only: boolean;
   api_version: string;
-  format_versions: Record<string, number[]>;
+  read_only: boolean;
   limits: {
     page_size_default: number;
     page_size_max: number;
@@ -176,42 +169,8 @@ export interface Capabilities {
     body_bytes_max: number;
   };
   kinds: Kind[];
-  operations: string[];
-  project_scope: "all" | string[];
   value_types: ValueType[];
   evidence_states: EvidenceState[];
-}
-
-export interface DiffEntry {
-  id: string;
-  kind: Kind;
-  label: string;
-  object: GraphObject;
-}
-
-export interface ChangedEntry {
-  id: string;
-  kind: Kind;
-  label: string;
-  fields: Record<string, { before: unknown; after: unknown }>;
-}
-
-export interface Diff {
-  from_revision: number;
-  to_revision: number;
-  added: DiffEntry[];
-  removed: DiffEntry[];
-  changed: ChangedEntry[];
-  counts: { added: number; removed: number; changed: number };
-}
-
-export interface Impacted {
-  object_ids: string[];
-  instance_ids: string[];
-  assertion_ids: string[];
-  warning_counts: { before: number; after: number };
-  warnings_added: string[];
-  warnings_removed: string[];
 }
 
 export type Operation =
@@ -219,61 +178,15 @@ export type Operation =
   | { op: "update"; id: string; fields: Record<string, unknown> }
   | { op: "delete"; id: string };
 
-export interface ChangeSet {
-  id: string;
+export interface BatchResult {
   project_id: string;
-  base_revision: number;
-  status: "prepared" | "invalid" | "committed";
-  payload_hash: string;
-  operations: Operation[] | Record<string, unknown>;
-  diff: Diff;
-  impacted: Impacted;
-  errors: Warning[];
-  warnings: Warning[];
-  id_map: Record<string, string>;
-  reason: string;
-  actor: string;
-  created_at: string | null;
-  committed_revision: number | null;
-}
-
-export interface CommitResult {
-  project_id: string;
-  revision: number;
+  version: number;
   changed: boolean;
-  change_set_id: string;
-  diff: Diff;
-  warnings: Warning[];
+  added_ids: string[];
+  updated_ids: string[];
+  deleted_ids: string[];
   id_map: Record<string, string>;
-  idempotent_replay?: boolean;
-}
-
-export interface Revision {
-  id: string;
-  revision: number;
-  actor: string;
-  reason: string;
-  change_set_id: string | null;
-  created_at: string | null;
-  diff: Diff;
-}
-
-export interface RevisionsResponse {
-  project_id: string;
-  current_revision: number;
-  revisions: Revision[];
-}
-
-export interface Snapshot {
-  id: string;
-  name: string;
-  revision: number;
-  created_at: string | null;
-}
-
-export interface SnapshotsResponse {
-  project_id: string;
-  snapshots: Snapshot[];
+  warnings: Warning[];
 }
 
 export interface LayoutData {
@@ -283,41 +196,5 @@ export interface LayoutData {
 
 export interface LayoutResponse {
   project_id: string;
-  version: number;
   data: LayoutData;
-  updated_at?: string | null;
-}
-
-export interface Credential {
-  id: string;
-  role: "owner" | "reader";
-  label: string;
-  project_ids: string[];
-  created_at: string | null;
-  revoked_at: string | null;
-  token?: string;
-  token_notice?: string;
-}
-
-export interface CredentialsResponse {
-  credentials: Credential[];
-}
-
-export interface NativeExport {
-  format: "graphloom-native";
-  format_version: number;
-  exported_at: string;
-  project: {
-    id: string;
-    name: string;
-    description: string;
-    revision: number;
-  };
-  graph: {
-    format_version: number;
-    project_id: string;
-    revision: number;
-    objects: GraphObject[];
-  };
-  layout?: LayoutData;
 }

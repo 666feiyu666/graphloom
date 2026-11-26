@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-from collections import deque
-from typing import Annotated, Literal, Union
+from typing import Any
 from uuid import UUID
-
-from pydantic import BaseModel, ConfigDict, Field
 
 from .graph import (
     descendant_classes,
@@ -14,7 +11,6 @@ from .graph import (
     references_to,
 )
 from .objects import (
-    AttributeTypeObject,
     AttributeValueObject,
     ClassObject,
     InstanceObject,
@@ -29,52 +25,6 @@ class QueryError(Exception):
         self.code = code
         self.message = message
         self.details = details or {}
-
-
-class NeighborsQuery(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    type: Literal["neighbors"]
-    object_id: UUID
-    direction: Literal["incoming", "outgoing", "both"] = "both"
-    relation_type_ids: list[UUID] = Field(default_factory=list)
-    depth: int = Field(default=1, ge=1, le=2)
-    include_attribute_values: bool = True
-
-
-class InstancesOfQuery(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    type: Literal["instances_of"]
-    class_id: UUID
-    include_descendants: bool = True
-
-
-class ReferencesToQuery(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    type: Literal["references_to"]
-    object_id: UUID
-
-
-Query = Annotated[
-    Union[NeighborsQuery, InstancesOfQuery, ReferencesToQuery],
-    Field(discriminator="type"),
-]
-
-
-class QueryEnvelope(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-    revision: int | None = None
-    query: Query
-
-
-def run_query(state, envelope: QueryEnvelope, *, max_objects: int = 500) -> dict:
-    query = envelope.query
-    if isinstance(query, NeighborsQuery):
-        return _neighbors(state, query, max_objects=max_objects)
-    if isinstance(query, InstancesOfQuery):
-        return _instances_of(state, query, max_objects=max_objects)
-    if isinstance(query, ReferencesToQuery):
-        return _references_to(state, query, max_objects=max_objects)
-    raise QueryError("unknown_query", "Unsupported query type")
 
 
 def _serialize_many(objects) -> list[dict]:
@@ -104,7 +54,13 @@ def _external_references(state, included_ids: set[str], objects) -> list[dict]:
     index = object_map(state)
     refs: dict[tuple[str, str], dict] = {}
     for obj in objects:
-        for field_name in ("source_id", "target_id", "subject_id", "relation_type_id", "attribute_type_id"):
+        for field_name in (
+            "source_id",
+            "target_id",
+            "subject_id",
+            "relation_type_id",
+            "attribute_type_id",
+        ):
             value = getattr(obj, field_name, None)
             if value is None:
                 continue
@@ -136,20 +92,28 @@ def _external_references(state, included_ids: set[str], objects) -> list[dict]:
     return sorted(refs.values(), key=lambda item: (item["id"], item["field"]))
 
 
-def _neighbors(state, query: NeighborsQuery, *, max_objects: int) -> dict:
+def neighbors(
+    state,
+    object_id: str | UUID,
+    *,
+    direction: str = "both",
+    relation_type_ids: list[str] | None = None,
+    depth: int = 1,
+    include_attribute_values: bool = True,
+    max_objects: int = 500,
+) -> dict:
     index = object_map(state)
-    start = index.get(str(query.object_id))
+    start = index.get(str(object_id))
     if start is None:
         raise QueryError(
             "unknown_object",
-            "The requested object does not exist at this revision",
-            {"object_id": str(query.object_id)},
+            "The requested object does not exist",
+            {"object_id": str(object_id)},
         )
 
     if not isinstance(start, InstanceObject):
         # For schema objects, expose the local dependency neighborhood rather
-        # than inventing edges. This keeps the distinction between schema
-        # dependencies and instance adjacency explicit.
+        # than inventing edges.
         dependents = references_to(state, start.id)
         related_ids = {item["object_id"] for item in dependents}
         for field_name in (
@@ -179,7 +143,7 @@ def _neighbors(state, query: NeighborsQuery, *, max_objects: int) -> dict:
         }
 
     relations = [obj for obj in state.objects if isinstance(obj, RelationObject)]
-    allowed_types = {str(item) for item in query.relation_type_ids}
+    allowed_types = {str(item) for item in (relation_type_ids or [])}
     visited: set[str] = {str(start.id)}
     frontier: list[str] = [str(start.id)]
     collected_relations: dict[str, RelationObject] = {}
@@ -189,13 +153,13 @@ def _neighbors(state, query: NeighborsQuery, *, max_objects: int) -> dict:
     def matches(rel: RelationObject, node: str) -> str | None:
         if allowed_types and str(rel.relation_type_id) not in allowed_types:
             return None
-        if query.direction in {"outgoing", "both"} and str(rel.source_id) == node:
+        if direction in {"outgoing", "both"} and str(rel.source_id) == node:
             return str(rel.target_id)
-        if query.direction in {"incoming", "both"} and str(rel.target_id) == node:
+        if direction in {"incoming", "both"} and str(rel.target_id) == node:
             return str(rel.source_id)
         return None
 
-    for _level in range(query.depth):
+    for _level in range(max(1, min(depth, 2))):
         next_frontier: list[str] = []
         for node in sorted(frontier):
             for rel in sorted(relations, key=lambda item: str(item.id)):
@@ -220,12 +184,14 @@ def _neighbors(state, query: NeighborsQuery, *, max_objects: int) -> dict:
             break
 
     instance_objects = [
-        index[item] for item in sorted(visited) if item in index and isinstance(index[item], InstanceObject)
+        index[item]
+        for item in sorted(visited)
+        if item in index and isinstance(index[item], InstanceObject)
     ]
     relation_objects = [collected_relations[key] for key in sorted(collected_relations)]
 
     attribute_values: list[AttributeValueObject] = []
-    if query.include_attribute_values:
+    if include_attribute_values:
         for value in state.objects:
             if (
                 isinstance(value, AttributeValueObject)
@@ -260,18 +226,24 @@ def _neighbors(state, query: NeighborsQuery, *, max_objects: int) -> dict:
     }
 
 
-def _instances_of(state, query: InstancesOfQuery, *, max_objects: int) -> dict:
+def instances_of(
+    state,
+    class_id: str | UUID,
+    *,
+    include_descendants: bool = True,
+    max_objects: int = 500,
+) -> dict:
     index = object_map(state)
-    class_obj = index.get(str(query.class_id))
+    class_obj = index.get(str(class_id))
     if class_obj is None or not isinstance(class_obj, ClassObject):
         raise QueryError(
             "unknown_class",
-            "The requested class does not exist at this revision",
-            {"class_id": str(query.class_id)},
+            "The requested class does not exist",
+            {"class_id": str(class_id)},
         )
     allowed = (
         descendant_classes(state, class_obj.id)
-        if query.include_descendants
+        if include_descendants
         else {str(class_obj.id)}
     )
     instances = [
@@ -292,7 +264,7 @@ def _instances_of(state, query: InstancesOfQuery, *, max_objects: int) -> dict:
     return {
         "query_type": "instances_of",
         "class_id": str(class_obj.id),
-        "include_descendants": query.include_descendants,
+        "include_descendants": include_descendants,
         "objects": _serialize_many(instances),
         "relation_ids": [],
         "attribute_value_ids": [],
@@ -304,14 +276,14 @@ def _instances_of(state, query: InstancesOfQuery, *, max_objects: int) -> dict:
     }
 
 
-def _references_to(state, query: ReferencesToQuery, *, max_objects: int) -> dict:
+def references_of(state, object_id: str | UUID, *, max_objects: int = 500) -> dict:
     index = object_map(state)
-    target = index.get(str(query.object_id))
+    target = index.get(str(object_id))
     if target is None:
         raise QueryError(
             "unknown_object",
-            "The requested object does not exist at this revision",
-            {"object_id": str(query.object_id)},
+            "The requested object does not exist",
+            {"object_id": str(object_id)},
         )
     references = references_to(state, target.id)
     unique_ids = sorted({item["object_id"] for item in references})

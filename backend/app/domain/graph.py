@@ -20,12 +20,11 @@ class GraphState(BaseModel):
 
     format_version: int = 1
     project_id: UUID
-    revision: int = 0
     objects: list[GraphObject] = Field(default_factory=list)
 
 
-def empty_state(project_id: UUID, revision: int = 0) -> GraphState:
-    return GraphState(project_id=project_id, revision=revision, objects=[])
+def empty_state(project_id: UUID) -> GraphState:
+    return GraphState(project_id=project_id, objects=[])
 
 
 def object_map(state: GraphState) -> dict[str, GraphObject]:
@@ -117,22 +116,6 @@ def references_to(state: GraphState, target_id: str | UUID) -> list[dict]:
 
 def instance_class_ids(obj: GraphObject) -> set[str]:
     return {str(class_id) for class_id in getattr(obj, "class_ids", [])}
-
-
-def is_instance_of_any(
-    state: GraphState,
-    instance: GraphObject,
-    allowed_class_ids: Iterable[str | UUID],
-    *,
-    include_descendants: bool = True,
-) -> bool:
-    allowed: set[str] = set()
-    for class_id in allowed_class_ids:
-        if include_descendants:
-            allowed |= descendant_classes(state, class_id)
-        else:
-            allowed.add(str(class_id))
-    return bool(instance_class_ids(instance) & allowed)
 
 
 def instance_labels(state: GraphState) -> dict[str, str]:

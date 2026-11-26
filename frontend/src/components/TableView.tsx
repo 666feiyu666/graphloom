@@ -46,13 +46,7 @@ function description(object: GraphObject): string {
   return object.definition;
 }
 
-export default function TableView({
-  objects,
-  selectedId,
-  warnings,
-  onSelect,
-  onEdit,
-}: Props) {
+export default function TableView({ objects, selectedId, warnings, onSelect, onEdit }: Props) {
   const [query, setQuery] = useState("");
   const [kindFilter, setKindFilter] = useState<Kind | "all">("all");
   const index = useMemo(() => objectById(objects), [objects]);
@@ -66,9 +60,7 @@ export default function TableView({
     .filter((object) => {
       if (!query.trim()) return true;
       const needle = query.trim().toLowerCase();
-      return `${summary(object, index)} ${description(object)}`
-        .toLowerCase()
-        .includes(needle);
+      return `${summary(object, index)} ${description(object)}`.toLowerCase().includes(needle);
     })
     .sort((a, b) => a.kind.localeCompare(b.kind) || summary(a, index).localeCompare(summary(b, index)));
 
@@ -101,8 +93,7 @@ export default function TableView({
               <th>Kind</th>
               <th>Object</th>
               <th>Definition / value</th>
-              <th>Review</th>
-              <th>Lifecycle</th>
+              <th>Status</th>
               <th aria-label="Actions" />
             </tr>
           </thead>
@@ -127,8 +118,7 @@ export default function TableView({
                   </span>
                 </td>
                 <td className="table-description">{description(object) || "—"}</td>
-                <td>{object.review_status}</td>
-                <td>{object.lifecycle}</td>
+                <td>{object.status}</td>
                 <td>
                   <button
                     className="mini"

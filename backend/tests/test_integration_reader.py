@@ -39,16 +39,13 @@ def wait_for_health(base_url: str, process: subprocess.Popen, timeout: float = 2
     pytest.fail(f"Graphloom did not become healthy: {last_error}")
 
 
-def seed_graph(client: httpx.Client, project_id: str, owner_headers: dict[str, str]) -> None:
+def seed_graph(client: httpx.Client, project_id: str) -> None:
     operations = [
         {
             "op": "create",
             "ref": "new:class",
             "kind": "class",
-            "data": {
-                "label": "Integration category",
-                "definition": "Synthetic integration fixture.",
-            },
+            "data": {"label": "Integration category", "definition": "Synthetic integration fixture."},
         },
         {
             "op": "create",
@@ -126,49 +123,24 @@ def seed_graph(client: httpx.Client, project_id: str, owner_headers: dict[str, s
             },
         },
     ]
-    prepared = client.post(
-        f"/projects/{project_id}/change-sets",
-        json={"base_revision": 0, "reason": "Integration fixture", "operations": operations},
-        headers=owner_headers,
-    )
-    assert prepared.status_code == 201, prepared.text
-    change_set = prepared.json()
-    assert change_set["status"] == "prepared", change_set
-    committed = client.post(
-        f"/projects/{project_id}/change-sets/{change_set['id']}/commit",
-        json={"expected_revision": 0},
-        headers={**owner_headers, "Idempotency-Key": "integration-seed"},
-    )
-    assert committed.status_code == 200, committed.text
-    assert committed.json()["revision"] == 1
+    response = client.post(f"/projects/{project_id}/batch", json={"operations": operations})
+    assert response.status_code == 200, response.text
+    assert response.json()["version"] == 1
 
 
-def test_reader_process_and_pinned_revision(tmp_path):
+def test_reader_process_reads_saved_graph(tmp_path):
     port = free_port()
     base_url = f"http://127.0.0.1:{port}/api/v1"
-    db_path = tmp_path / "integration.db"
+    data_dir = tmp_path / "projects"
     env = os.environ.copy()
     env.update(
         {
-            "GRAPPHLOOM_DB_PATH": str(db_path),
+            "GRAPPHLOOM_DATA_DIR": str(data_dir),
             "GRAPPHLOOM_FRONTEND_DIST": str(tmp_path / "dist"),
-            "GRAPPHLOOM_RATE_LIMIT_PER_MINUTE": "100000",
             "NO_PROXY": "127.0.0.1,localhost",
             "no_proxy": "127.0.0.1,localhost",
         }
     )
-
-    owner = subprocess.run(
-        [sys.executable, "-m", "app.cli", "init-owner", "--label", "owner"],
-        cwd=BACKEND_DIR,
-        env=env,
-        capture_output=True,
-        text=True,
-        timeout=60,
-    )
-    assert owner.returncode == 0, f"stdout:\n{owner.stdout}\nstderr:\n{owner.stderr}"
-    owner_token = json.loads(owner.stdout)["token"]
-    owner_headers = {"Authorization": f"Bearer {owner_token}"}
 
     process = subprocess.Popen(
         [
@@ -195,31 +167,18 @@ def test_reader_process_and_pinned_revision(tmp_path):
             project_response = client.post(
                 "/projects",
                 json={"name": "Integration project", "description": "Synthetic technical fixture"},
-                headers=owner_headers,
             )
             assert project_response.status_code == 201, project_response.text
             project_id = project_response.json()["id"]
-            seed_graph(client, project_id, owner_headers)
+            seed_graph(client, project_id)
 
-            credential_response = client.post(
-                "/credentials",
-                json={"label": "integration reader", "project_ids": [project_id]},
-                headers=owner_headers,
-            )
-            assert credential_response.status_code == 200, credential_response.text
-            credential = credential_response.json()
-            reader_token = credential["token"]
-            reader_headers = {"Authorization": f"Bearer {reader_token}"}
-
-            # The example runs as a separate process and uses the public HTTP contract.
+            # The example runs as a separate process and uses only the read contract.
             example = subprocess.run(
                 [
                     sys.executable,
                     str(READER_CLIENT),
                     "--base-url",
                     base_url,
-                    "--token",
-                    reader_token,
                     "--project-id",
                     project_id,
                 ],
@@ -231,10 +190,9 @@ def test_reader_process_and_pinned_revision(tmp_path):
             )
             assert example.returncode == 0, f"stdout:\n{example.stdout}\nstderr:\n{example.stderr}"
             summary = json.loads(example.stdout)
-            assert summary["role"] == "reader"
             assert summary["read_only"] is True
             assert summary["project"]["id"] == project_id
-            assert summary["project"]["pinned_revision"] == 1
+            assert summary["project"]["version"] == 1
             assert summary["full_state_object_count"] == 8
             assert {item["label"] for item in summary["schema"]["classes"]} == {
                 "Integration category"
@@ -250,80 +208,14 @@ def test_reader_process_and_pinned_revision(tmp_path):
             }
             assert {"Integration Alpha", "Integration Beta"} <= neighborhood_labels
 
-            # A reader credential cannot write or manage any owner operation.
-            forbidden_change_set = client.post(
-                f"/projects/{project_id}/change-sets",
-                json={"base_revision": 1, "reason": "", "operations": []},
-                headers=reader_headers,
-            )
-            assert forbidden_change_set.status_code == 403
-            assert forbidden_change_set.json()["error"]["code"] == "owner_required"
-            assert client.post(
-                "/projects", json={"name": "forbidden"}, headers=reader_headers
-            ).status_code == 403
-            assert client.get("/credentials", headers=reader_headers).status_code == 403
-            assert client.put(
-                f"/projects/{project_id}/layout",
-                json={"expected_version": 0, "data": {}},
-                headers=reader_headers,
-            ).status_code == 403
-
-            # A reader-only OpenAPI document exists and omits owner editing routes.
+            # The reader-only OpenAPI omits the write route.
             reader_spec = client.get("/openapi.reader.json")
             assert reader_spec.status_code == 200
             spec = reader_spec.json()
             assert spec["x-graphloom-read-only"] is True
-            assert "/api/v1/projects" in spec["paths"]
             assert set(spec["paths"]["/api/v1/projects"]) == {"get"}
-            assert not any("change-sets" in path for path in spec["paths"])
-            assert not any("credentials" in path for path in spec["paths"])
-
-            # An owner can advance the project while a reader keeps an older pin.
-            advance = client.post(
-                f"/projects/{project_id}/change-sets",
-                json={
-                    "base_revision": 1,
-                    "reason": "Advance after reader pin",
-                    "operations": [
-                        {
-                            "op": "create",
-                            "ref": "new:later",
-                            "kind": "class",
-                            "data": {
-                                "label": "Later integration class",
-                                "definition": "Synthetic integration fixture.",
-                            },
-                        }
-                    ],
-                },
-                headers=owner_headers,
-            )
-            assert advance.status_code == 201
-            advance_payload = advance.json()
-            assert advance_payload["status"] == "prepared", advance_payload
-            advanced = client.post(
-                f"/projects/{project_id}/change-sets/{advance_payload['id']}/commit",
-                json={"expected_revision": 1},
-                headers={**owner_headers, "Idempotency-Key": "integration-advance"},
-            )
-            assert advanced.status_code == 200
-            assert advanced.json()["revision"] == 2
-
-            pinned = client.get(f"/projects/{project_id}/state?revision=1", headers=reader_headers)
-            assert pinned.status_code == 200
-            assert pinned.json()["revision"] == 1
-            assert len(pinned.json()["objects"]) == 8
-            current = client.get(f"/projects/{project_id}/state", headers=reader_headers)
-            assert current.json()["revision"] == 2
-
-            # Revocation immediately ends the reader session.
-            revoke = client.delete(
-                f"/credentials/{credential['id']}", headers=owner_headers
-            )
-            assert revoke.status_code == 200
-            assert client.get(
-                f"/projects/{project_id}/state", headers=reader_headers
-            ).status_code == 401
+            assert "/api/v1/projects/{project_id}/batch" not in spec["paths"]
+            assert "/api/v1/projects/{project_id}/layout" not in spec["paths"]
     finally:
         process.terminate()
         try:

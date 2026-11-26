@@ -9,9 +9,8 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from app.domain.changesets import ChangeSetError
+from app.domain.operations import OperationError
 from app.domain.queries import QueryError
-from app.exports.native import ImportValidationError
 
 logger = logging.getLogger("graphloom")
 
@@ -61,19 +60,15 @@ def install_error_handlers(app: FastAPI) -> None:
     async def _api_error(request: Request, exc: ApiError) -> JSONResponse:
         return error_response(request, exc.status_code, exc.code, exc.message, exc.details)
 
-    @app.exception_handler(ChangeSetError)
-    async def _change_set_error(request: Request, exc: ChangeSetError) -> JSONResponse:
+    @app.exception_handler(OperationError)
+    async def _operation_error(request: Request, exc: OperationError) -> JSONResponse:
         return error_response(
-            request, exc.status_code, exc.code, exc.message, exc.details
+            request, exc.status_code, exc.code, str(exc), {"errors": exc.errors}
         )
 
     @app.exception_handler(QueryError)
     async def _query_error(request: Request, exc: QueryError) -> JSONResponse:
         return error_response(request, 422, exc.code, exc.message, exc.details)
-
-    @app.exception_handler(ImportValidationError)
-    async def _import_error(request: Request, exc: ImportValidationError) -> JSONResponse:
-        return error_response(request, 422, "invalid_import", exc.message, exc.details)
 
     @app.exception_handler(RequestValidationError)
     async def _validation_error(
@@ -90,9 +85,4 @@ def install_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(Exception)
     async def _unexpected(request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled server error", exc_info=exc)
-        return error_response(
-            request,
-            500,
-            "internal_error",
-            "Unexpected server error",
-        )
+        return error_response(request, 500, "internal_error", "Unexpected server error")
