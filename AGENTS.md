@@ -7,7 +7,8 @@ Product boundary lives in `docs/design.md`; usage lives in `README.md`. This fil
 - Single local user on loopback. Do not add authentication, tokens, accounts, or a public deployment.
 - No agent write interface, no built-in modeling assistant or AI features, no MCP server.
 - The only semantic write path is `POST /api/v1/projects/{id}/batch`. Saves are atomic: an invalid batch changes nothing.
-- Each project is one JSON file under `GRAPPHLOOM_DATA_DIR`, written atomically with a `<id>.bak` of the previous state. Do not reintroduce SQLite, an ORM, or migrations.
+- Each project is one JSON file under `GRAPPHLOOM_DATA_DIR`, written atomically with a `<id>.bak` of the previous state. Do not reintroduce SQLite, an ORM, or migrations. `DataStore` must not create directories on import — only on first write.
+- Data isolation: automated tests use pytest's `tmp_path`; development fixtures and `examples/seed.py` write to `.local/dev` (`GRAPPHLOOM_PROFILE=dev`). Never write test or development data into `.local/projects`.
 - Reads are side-effect free and never advance the project version.
 - Layout (node positions, viewport) is not semantic. Keep it out of the graph state.
 - Ontology definitions and instance assertions stay distinct. Object lifecycle is `status: active | deprecated`; do not add unrequested fields such as `review_status`, `origin`, or actor attribution.

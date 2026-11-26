@@ -24,7 +24,8 @@ class DataStore:
 
     def __init__(self, data_dir: Path) -> None:
         self.data_dir = Path(data_dir)
-        self.data_dir.mkdir(parents=True, exist_ok=True)
+        # Created lazily on the first write so importing the app never touches
+        # the runtime data directory.
         self._lock = Lock()
 
     # -- paths ---------------------------------------------------------------
@@ -57,6 +58,8 @@ class DataStore:
 
     # -- projects ------------------------------------------------------------
     def list_projects(self) -> list[dict]:
+        if not self.data_dir.exists():
+            return []
         projects: list[dict] = []
         for path in sorted(self.data_dir.glob("*.json")):
             if path.name.endswith(".layout.json"):

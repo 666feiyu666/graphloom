@@ -82,7 +82,7 @@ examples/                      Synthetic fixtures and a read-only consumer examp
 .gitignore                     Runtime data, build outputs
 ```
 
-Runtime data lives in an ignored `graphloom/.local/` directory. Keep research materials in their current locations and store references when needed; do not copy or modify proposal files as part of application initialization.
+Runtime data lives in an ignored `graphloom/.local/` directory. Everyday use writes to `.local/projects`; development uses `.local/dev` (`GRAPPHLOOM_PROFILE=dev`), and automated tests use temporary directories. Keep research materials in their current locations and store references when needed; do not copy or modify proposal files as part of application initialization.
 
 ## 4. Domain model
 

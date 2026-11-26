@@ -34,7 +34,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/api/v1/openapi.json",
     )
     app.state.settings = settings
-    app.state.store = DataStore(settings.data_dir)
+    app.state.store = DataStore(settings.resolved_data_dir)
 
     app.add_middleware(
         CORSMiddleware,

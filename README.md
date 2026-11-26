@@ -68,8 +68,17 @@ python3 examples/reader_client.py \
   --project-id <project-id>
 ```
 
-## Data
+## Data and environments
 
-- Each project is one JSON file: `.local/projects/<project-id>.json`.
-- The previous save is kept as `<project-id>.bak`.
-- To back up or move a project, copy the file and its `.bak`.
+- Everyday use writes to `.local/projects/`; each project is one JSON file and the previous save is kept as `<project-id>.bak`.
+- Development uses a separate store: set `GRAPPHLOOM_PROFILE=dev` (the backend then uses `.local/dev/`), or point `GRAPPHLOOM_DATA_DIR` at any directory. An explicit `GRAPPHLOOM_DATA_DIR` always wins.
+- Automated tests use pytest's temporary directories and never touch `.local/projects/`.
+- Seed synthetic development data into `.local/dev/` (refuses `.local/projects/` unless `--force`):
+
+  ```bash
+  cd graphloom/backend && uv run python ../examples/seed.py
+  ```
+
+- Run the backend against development data by prefixing the command with `GRAPPHLOOM_PROFILE=dev`.
+
+- To back up or move a project, copy its file and its `.bak`.
