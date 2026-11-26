@@ -10,7 +10,6 @@ from .objects import (
     REF_FIELDS,
     ClassObject,
     GraphObject,
-    NamedBase,
     object_label,
 )
 
@@ -29,14 +28,6 @@ def empty_state(project_id: UUID) -> GraphState:
 
 def object_map(state: GraphState) -> dict[str, GraphObject]:
     return {str(obj.id): obj for obj in state.objects}
-
-
-def get_object(state: GraphState, object_id: str | UUID) -> GraphObject | None:
-    return object_map(state).get(str(object_id))
-
-
-def objects_of_kind(state: GraphState, kind: str) -> list[GraphObject]:
-    return [obj for obj in state.objects if obj.kind == kind]
 
 
 def display_label(obj: BaseModel) -> str:
@@ -65,23 +56,6 @@ def descendant_classes(state: GraphState, class_id: str | UUID) -> set[str]:
         for child in children.get(current, set()):
             if child not in seen:
                 queue.append(child)
-    return seen
-
-
-def ancestor_classes(state: GraphState, class_id: str | UUID) -> set[str]:
-    objects = object_map(state)
-    seen: set[str] = set()
-    queue = deque([str(class_id)])
-    while queue:
-        current = queue.popleft()
-        if current in seen:
-            continue
-        seen.add(current)
-        obj = objects.get(current)
-        if isinstance(obj, ClassObject):
-            for parent in obj.parent_ids:
-                if str(parent) not in seen:
-                    queue.append(str(parent))
     return seen
 
 
@@ -116,20 +90,3 @@ def references_to(state: GraphState, target_id: str | UUID) -> list[dict]:
 
 def instance_class_ids(obj: GraphObject) -> set[str]:
     return {str(class_id) for class_id in getattr(obj, "class_ids", [])}
-
-
-def instance_labels(state: GraphState) -> dict[str, str]:
-    return {
-        str(obj.id): display_label(obj)
-        for obj in state.objects
-        if obj.kind == "instance"
-    }
-
-
-def named_object_ids_by_label(state: GraphState) -> dict[str, set[str]]:
-    grouped: dict[str, set[str]] = defaultdict(set)
-    for obj in state.objects:
-        if isinstance(obj, NamedBase):
-            key = " ".join(obj.label.casefold().split())
-            grouped[key].add(str(obj.id))
-    return grouped

@@ -270,14 +270,3 @@ export function buildInstanceProjection(
     visibleInstanceIds: visibleInstances.map((item) => item.id),
   };
 }
-
-export function searchChildren(
-  objects: GraphObject[],
-  parentId: string,
-  field: "parent_ids" | "class_ids",
-): GraphObject[] {
-  return objects.filter((item) => {
-    const values = (item as unknown as Record<string, string[]>)[field];
-    return Array.isArray(values) && values.includes(parentId);
-  });
-}

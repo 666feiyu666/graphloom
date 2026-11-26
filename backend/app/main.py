@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from pathlib import Path
 from uuid import uuid4
 
@@ -15,9 +14,6 @@ from app.api.system import router as system_router
 from app.api.write import router as write_router
 from app.config import Settings, get_settings
 from app.storage import DataStore
-
-logger = logging.getLogger("graphloom")
-
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()

@@ -26,8 +26,6 @@ interface Props {
   selectedId: string | null;
   linkMode: boolean;
   linkSource: string | null;
-  autoLayout: boolean;
-  projectionKey: string;
   onSelect: (id: string | null) => void;
   onEdit: (id: string) => void;
   onPositions: (positions: Record<string, { x: number; y: number }>) => void;
@@ -192,8 +190,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(function GraphCanvas(
     selectedId,
     linkMode,
     linkSource,
-    autoLayout,
-    projectionKey,
     onSelect,
     onEdit,
     onPositions,
@@ -204,7 +200,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(function GraphCanvas(
 ) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
-  const didInitialLayout = useRef(false);
   const lastElements = useRef<ProjectionElement[] | null>(null);
   const viewportTimer = useRef<number | null>(null);
   const callbacks = useRef({
@@ -303,7 +298,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(function GraphCanvas(
       cy.destroy();
       cyRef.current = null;
       lastElements.current = null;
-      didInitialLayout.current = false;
     };
   }, []);
 
@@ -316,10 +310,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(function GraphCanvas(
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => {
-    didInitialLayout.current = false;
-  }, [projectionKey]);
 
   useEffect(() => {
     const cy = cyRef.current;
@@ -360,10 +350,6 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(function GraphCanvas(
     }
     ensureLayout();
   }, [elements, positions]);
-
-  useEffect(() => {
-    didInitialLayout.current = false;
-  }, [projectionKey]);
 
   useEffect(() => {
     const cy = cyRef.current;

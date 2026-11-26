@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, Literal, Union
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 Kind = Literal[
     "class",
@@ -26,10 +26,6 @@ EvidenceState = Literal[
 ]
 ValueType = Literal["string", "number", "boolean", "date", "uri"]
 LocatorKind = Literal["url", "workspace_relative_path", "zotero_key", "free_text"]
-
-NAMED_KINDS: set[str] = {"class", "relation_type", "attribute_type", "instance"}
-SCHEMA_KINDS: set[str] = {"class", "relation_type", "attribute_type"}
-
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)

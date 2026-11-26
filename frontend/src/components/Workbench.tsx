@@ -198,7 +198,6 @@ export default function Workbench({ projectId, onBack }: Props) {
     return values.length > 1 && distinct <= 1 ? {} : result;
   }, [positions, nodeIds]);
 
-  const projectionKey = `${mode}:${selectedClassId ?? "all"}`;
   const selected = objects.find((object) => object.id === selectedId) ?? null;
   const warningTarget = draft?.id ?? selectedId;
   const selectedWarnings =
@@ -506,8 +505,6 @@ export default function Workbench({ projectId, onBack }: Props) {
               selectedId={selectedId}
               linkMode={linkMode}
               linkSource={linkSource}
-              autoLayout={false}
-              projectionKey={projectionKey}
               onSelect={select}
               onEdit={(id) => {
                 const object = objects.find((item) => item.id === id);
