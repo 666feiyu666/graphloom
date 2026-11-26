@@ -153,6 +153,9 @@ export default function Workbench({ projectId, onBack }: Props) {
       nextPositions: Record<string, { x: number; y: number }>,
       nextViewport?: { zoom: number; pan: { x: number; y: number } } | null,
     ) => {
+      const values = Object.values(nextPositions);
+      const distinct = new Set(values.map((point) => `${Math.round(point.x)},${Math.round(point.y)}`)).size;
+      if (values.length > 1 && distinct <= 1) return;
       positionsRef.current = nextPositions;
       setPositions(nextPositions);
       if (nextViewport) viewportRef.current = nextViewport;
@@ -175,6 +178,25 @@ export default function Workbench({ projectId, onBack }: Props) {
     if (mode === "model") return buildModelProjection(objects);
     return buildInstanceProjection(objects, selectedClassId);
   }, [objects, mode, selectedClassId]);
+  const nodeIds = useMemo(
+    () =>
+      new Set(
+        projection.elements
+          .filter((element) => (element.data as { source?: string }).source === undefined)
+          .map((element) => element.data.id),
+      ),
+    [projection],
+  );
+  const effectivePositions = useMemo(() => {
+    const result: Record<string, { x: number; y: number }> = {};
+    for (const [id, value] of Object.entries(positions)) {
+      if (nodeIds.has(id)) result[id] = value;
+    }
+    const values = Object.values(result);
+    const distinct = new Set(values.map((point) => `${Math.round(point.x)},${Math.round(point.y)}`)).size;
+    // A degenerate saved layout (all nodes on one spot) must not suppress auto-layout.
+    return values.length > 1 && distinct <= 1 ? {} : result;
+  }, [positions, nodeIds]);
 
   const projectionKey = `${mode}:${selectedClassId ?? "all"}`;
   const selected = objects.find((object) => object.id === selectedId) ?? null;
@@ -480,11 +502,11 @@ export default function Workbench({ projectId, onBack }: Props) {
             <GraphCanvas
               ref={canvasRef}
               elements={projection.elements}
-              positions={positions}
+              positions={effectivePositions}
               selectedId={selectedId}
               linkMode={linkMode}
               linkSource={linkSource}
-              autoLayout={Object.keys(positions).length === 0}
+              autoLayout={false}
               projectionKey={projectionKey}
               onSelect={select}
               onEdit={(id) => {

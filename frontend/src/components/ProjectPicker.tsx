@@ -62,7 +62,6 @@ export default function ProjectPicker({ projects, error, onSelect, onCreated }: 
     <main className="picker-shell">
       <header className="picker-header">
         <div>
-          <p className="eyebrow">Graphloom</p>
           <h1>Projects</h1>
           <p className="muted">
             Each project owns one ontology and graph, stored as a single local JSON file.
@@ -140,7 +139,6 @@ export default function ProjectPicker({ projects, error, onSelect, onCreated }: 
         </section>
 
         <section className="create-card">
-          <p className="eyebrow">New project</p>
           <h2>Start empty</h2>
           <form onSubmit={create} className="stacked-form">
             <label htmlFor="project-name">Name</label>

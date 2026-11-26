@@ -398,7 +398,6 @@ export default function Inspector(props: Props) {
     return (
       <aside className="inspector" aria-label="Inspector">
         <div className="inspector-body">
-          <p className="eyebrow">Inspector</p>
           <h2>Nothing selected</h2>
           <p className="muted">
             Select an object in the graph, explorer, or table. Schema edges are derived from

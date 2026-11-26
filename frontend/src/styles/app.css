@@ -4,7 +4,7 @@
   --paper-3: #fffdf8;
   --ink: #1f2933;
   --ink-soft: #34424f;
-  --muted: #667085;
+  --muted: #5b6575;
   --line: #d8d2c4;
   --line-strong: #b9b09f;
   --accent: #b5432f;
@@ -19,6 +19,10 @@
   --sans: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
   --mono: "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --shadow-sm: 0 1px 2px rgba(31, 41, 51, 0.06), 0 8px 20px rgba(31, 41, 51, 0.06);
+  --focus-ring: 0 0 0 3px rgba(181, 67, 47, 0.14);
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
 * {
@@ -715,7 +719,6 @@ label {
 
 .tree-main.is-selected {
   background: #e9e3d6;
-  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 .row-label {
@@ -1722,12 +1725,175 @@ tbody tr.is-selected {
     justify-content: flex-start;
   }
 
-  .diff-grid,
-  .impact-strip {
-    grid-template-columns: 1fr;
-  }
+}
 
-  .history-drawer {
-    grid-template-columns: 1fr;
+/* ---------------------------------------------------------------------------
+   Polish layer: browser surfaces, focus, and restrained motion
+   --------------------------------------------------------------------------- */
+
+html {
+  color-scheme: light;
+}
+
+::selection {
+  background: rgba(181, 67, 47, 0.16);
+  color: var(--ink);
+}
+
+input,
+textarea,
+select,
+[contenteditable] {
+  caret-color: var(--accent);
+}
+
+:where(a, .object-link, .button-like) {
+  text-underline-offset: 2px;
+}
+
+/* Tabular numerals wherever numbers are read or compared. */
+.revision-badge,
+.project-counts dd,
+.overview-stats dd,
+.row-meta,
+table,
+.read-json,
+.endpoint-line {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbars that belong to the palette. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+  background-clip: content-box;
+}
+
+/* Inputs get a tinted ring instead of a bare outline. */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+/* Pressed states read as pressed. */
+.primary:active:not(:disabled),
+.secondary:active:not(:disabled),
+.danger:active:not(:disabled),
+.button-like:active {
+  transform: translateY(1px);
+}
+
+/* Project cards: a clearer hover and a visible keyboard focus. */
+.project-card {
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.project-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.project-card:focus-visible {
+  outline: 2px solid rgba(181, 67, 47, 0.55);
+  outline-offset: 2px;
+}
+
+.project-card-actions .mini {
+  opacity: 0.72;
+}
+
+.project-card:hover .project-card-actions .mini,
+.project-card:focus-within .project-card-actions .mini {
+  opacity: 1;
+}
+
+/* One authored entrance for the project list. */
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.project-list .project-card {
+  animation: card-rise 260ms var(--ease-out) both;
+}
+
+.project-list .project-card:nth-child(2) {
+  animation-delay: 30ms;
+}
+
+.project-list .project-card:nth-child(3) {
+  animation-delay: 60ms;
+}
+
+.project-list .project-card:nth-child(4) {
+  animation-delay: 90ms;
+}
+
+.project-list .project-card:nth-child(n + 5) {
+  animation-delay: 120ms;
+}
+
+/* The read drawer settles in rather than popping. */
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.drawer {
+  animation: drawer-in 200ms var(--ease-out) both;
+}
+
+/* Read tabs behave like quiet links, not chunky buttons. */
+.read-tabs button {
+  transition: color 120ms ease, border-color 120ms ease, background 120ms ease;
+}
+
+.read-tabs button:hover:not(.is-active) {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

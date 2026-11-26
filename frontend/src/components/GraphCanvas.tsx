@@ -302,7 +302,19 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(function GraphCanvas(
       if (viewportTimer.current) window.clearTimeout(viewportTimer.current);
       cy.destroy();
       cyRef.current = null;
+      lastElements.current = null;
+      didInitialLayout.current = false;
     };
+  }, []);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(() => {
+      cyRef.current?.resize();
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -312,7 +324,24 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(function GraphCanvas(
   useEffect(() => {
     const cy = cyRef.current;
     if (!cy) return;
+
+    const ensureLayout = () => {
+      if (!cy.nodes().length) return;
+      if (Object.keys(positions).length > 0) return;
+      const unique = new Set(
+        cy.nodes().map(
+          (node) => `${Math.round(node.position("x"))},${Math.round(node.position("y"))}`,
+        ),
+      ).size;
+      if (unique > 1) return;
+      // Built-in cose is synchronous, so a collapsed first view self-heals.
+      cy.resize();
+      cy.layout({ name: "cose", animate: false, fit: true, padding: 48 } as never).run();
+      callbacks.current.onPositions(readPositions(cy));
+    };
+
     if (lastElements.current !== elements) {
+      const firstLoad = lastElements.current === null;
       const viewport = { zoom: cy.zoom(), pan: cy.pan() };
       cy.batch(() => {
         cy.elements().remove();
@@ -320,19 +349,21 @@ const GraphCanvas = forwardRef<GraphCanvasHandle, Props>(function GraphCanvas(
       });
       lastElements.current = elements;
       applyPositions(cy, positions);
-      cy.zoom(viewport.zoom);
-      cy.pan(viewport.pan);
+      if (firstLoad && Object.keys(positions).length > 0) {
+        cy.fit(undefined, 48);
+      } else if (!firstLoad) {
+        cy.zoom(viewport.zoom);
+        cy.pan(viewport.pan);
+      }
     } else {
       applyPositions(cy, positions);
     }
+    ensureLayout();
   }, [elements, positions]);
 
   useEffect(() => {
-    const cy = cyRef.current;
-    if (!cy || !elements.length || !autoLayout || didInitialLayout.current) return;
-    didInitialLayout.current = true;
-    runLayout(false);
-  }, [elements, autoLayout]);
+    didInitialLayout.current = false;
+  }, [projectionKey]);
 
   useEffect(() => {
     const cy = cyRef.current;
