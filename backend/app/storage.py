@@ -129,6 +129,33 @@ class DataStore:
             self._write_atomic(self._layout_path(project_id), data)
         return {"project_id": project_id, "data": data}
 
+    def rename_project(
+        self,
+        project_id: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+    ) -> dict:
+        with self._lock:
+            raw = self._load_raw(project_id)
+            if name is not None:
+                raw["name"] = name
+            if description is not None:
+                raw["description"] = description
+            raw["updated_at"] = _now_iso()
+            self._write_atomic(self._path(project_id), raw)
+        return self._meta(raw)
+
+    def delete_project(self, project_id: str) -> None:
+        self._load_raw(project_id)
+        with self._lock:
+            for path in (
+                self._path(project_id),
+                self._layout_path(project_id),
+                self._backup_path(project_id),
+            ):
+                path.unlink(missing_ok=True)
+
     # -- helpers -------------------------------------------------------------
     @staticmethod
     def _meta(raw: dict) -> dict:

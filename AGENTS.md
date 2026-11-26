@@ -14,6 +14,11 @@ Product boundary lives in `docs/design.md`; usage lives in `README.md`. This fil
 - Ontology definitions and instance assertions stay distinct. Object lifecycle is `status: active | deprecated`; do not add unrequested fields such as `review_status`, `origin`, or actor attribution.
 - Do not add these without explicit instruction: RDF/Turtle export, native import, revision history, snapshots, branching, PDF/OCR, embeddings/GraphRAG, multi-user, OWL/SPARQL reasoning, Neo4j/PostgreSQL/Redis/Celery/Docker.
 
+## Git
+
+- Never run `git commit`, `git push`, `git reset`, or other history-changing commands. Leave changes in the working tree; the researcher reviews and commits.
+- Read-only inspection (`git status`, `git diff`, `git log`) is fine.
+
 ## Environment
 
 - Backend: `uv` with Python 3.13 and a project-local `.venv` under `backend/`. Never use Apple or Homebrew Python.

@@ -1,0 +1,38 @@
+{
+  "project": {
+    "name": "Banksy case graph",
+    "description": "Reviewed visual-rhetoric case graph for a limited Banksy corpus. Sources are CC-licensed Wikimedia Commons photographs; the artworks themselves are not CC-licensed."
+  },
+  "classes": [
+    { "id": "visual-artifact", "label": "Visual artifact", "definition": "An object or intervention that produces meaning through visual form." },
+    { "id": "street-artwork", "label": "Street artwork", "definition": "An artwork made for or in public space.", "parents": ["visual-artifact"] },
+    { "id": "installation", "label": "Installation", "definition": "A spatial or institutional work rather than a single image.", "parents": ["visual-artifact"] },
+    { "id": "agent", "label": "Agent", "definition": "A person or collective that acts or is attributed authorship." },
+    { "id": "artist", "label": "Artist", "definition": "A maker or attributed author.", "parents": ["agent"] },
+    { "id": "visual-motif", "label": "Visual motif", "definition": "A recurring visual element." },
+    { "id": "rhetorical-trope", "label": "Rhetorical trope", "definition": "A repeatable persuasive or figural strategy." },
+    { "id": "site", "label": "Public site", "definition": "A physical location with social meaning." },
+    { "id": "institution", "label": "Institution", "definition": "An organisation that frames or displays art." },
+    { "id": "audience", "label": "Audience", "definition": "A collective addressed by a work." },
+    { "id": "discourse", "label": "Discourse", "definition": "A public issue or frame of debate." },
+    { "id": "reception-event", "label": "Reception event", "definition": "An event in which a work is received, circulated, or documented." }
+  ],
+  "relation_types": [
+    { "id": "depicts", "label": "depicts", "definition": "The work shows this motif.", "domain": ["visual-artifact"], "range": ["visual-motif"] },
+    { "id": "deploys", "label": "deploys", "definition": "The work uses this rhetorical trope.", "domain": ["visual-artifact"], "range": ["rhetorical-trope"] },
+    { "id": "sitedAt", "label": "sitedAt", "definition": "The work is situated at this site.", "domain": ["visual-artifact"], "range": ["site"] },
+    { "id": "attributedTo", "label": "attributedTo", "definition": "The work is attributed to this artist.", "domain": ["visual-artifact"], "range": ["artist"] },
+    { "id": "practises", "label": "practises", "definition": "The agent habitually uses this rhetorical trope.", "domain": ["agent"], "range": ["rhetorical-trope"] },
+    { "id": "respondsTo", "label": "respondsTo", "definition": "The work responds to this discourse.", "domain": ["visual-artifact"], "range": ["discourse"] },
+    { "id": "addresses", "label": "addresses", "definition": "The work addresses this audience.", "domain": ["visual-artifact"], "range": ["audience"] },
+    { "id": "institutionalContext", "label": "institutionalContext", "definition": "The work is framed by this institution.", "domain": ["visual-artifact"], "range": ["institution"] },
+    { "id": "appropriates", "label": "appropriates", "definition": "The work reuses another visual work.", "domain": ["visual-artifact"], "range": ["visual-artifact"] },
+    { "id": "receptionOf", "label": "receptionOf", "definition": "The reception event concerns this work.", "domain": ["reception-event"], "range": ["visual-artifact"] }
+  ],
+  "attribute_types": [
+    { "id": "year", "label": "year", "definition": "Year associated with the work or event.", "value_type": "number" },
+    { "id": "medium", "label": "medium", "definition": "Working medium.", "value_type": "string" },
+    { "id": "locationText", "label": "locationText", "definition": "Location as text.", "value_type": "string" },
+    { "id": "rhetoricalFunction", "label": "rhetoricalFunction", "definition": "Agent-proposed rhetorical reading.", "value_type": "string" }
+  ]
+}

@@ -99,6 +99,20 @@ export const api = {
   getProject: (projectId: string) =>
     request<ProjectSummary>(`/projects/${projectId}`),
 
+  renameProject: (
+    projectId: string,
+    updates: { name?: string; description?: string },
+  ) =>
+    request<ProjectSummary>(`/projects/${projectId}`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    }),
+
+  deleteProject: (projectId: string) =>
+    request<{ project_id: string; deleted: boolean }>(`/projects/${projectId}`, {
+      method: "DELETE",
+    }),
+
   getState: (projectId: string) =>
     request<GraphState>(`/projects/${projectId}/state`),
 

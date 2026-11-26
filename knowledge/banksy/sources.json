@@ -1,0 +1,64 @@
+{
+  "sources": [
+    {
+      "id": "well-hung-lover-photo",
+      "label": "'Well Hung Lover', Bristol (Commons)",
+      "locator": {
+        "kind": "url",
+        "value": "https://commons.wikimedia.org/wiki/File:%27Well_Hung_Lover%27,_Banksy%27s_Graffiti_Mural_in_Bristol,_England_(November_14th_2026).jpg"
+      },
+      "citation_text": "Photograph by Vintage Fan 5678, CC BY-SA 4.0. Commons description: 2006 mural on Frogmore Street, Bristol.",
+      "evidence_state": "abstract_preview_verified"
+    },
+    {
+      "id": "paint-pot-angel-photo",
+      "label": "Paint Pot Angel, Bristol Museum (Commons)",
+      "locator": {
+        "kind": "url",
+        "value": "https://commons.wikimedia.org/wiki/File:Banksy%27s_Paint_Pot_Angel_in_Bristol_Museum_and_Art_Gallery.jpg"
+      },
+      "citation_text": "Photograph by Vintage Fan 5678, CC BY-SA 4.0. Commons description: Paint Pot Angel in Bristol Museum and Art Gallery.",
+      "evidence_state": "abstract_preview_verified"
+    },
+    {
+      "id": "drop-in-photographers-photo",
+      "label": "Drop In Photographers, New Orleans (Commons)",
+      "locator": {
+        "kind": "url",
+        "value": "https://commons.wikimedia.org/wiki/File:Banksy_Drop_In_Photographers,_New_Orleans.jpg"
+      },
+      "citation_text": "Photograph by Infrogmation of New Orleans, CC BY-SA 2.0, 2008. Commons note: the Banksy work is blurred for derivative-work copyright reasons.",
+      "evidence_state": "abstract_preview_verified"
+    },
+    {
+      "id": "girl-domburg-photo",
+      "label": "Girl with Balloon seen in Domburg (Commons)",
+      "locator": {
+        "kind": "url",
+        "value": "https://commons.wikimedia.org/wiki/File:Girl_with_Balloon_(IMG_20230615_150813).jpg"
+      },
+      "citation_text": "Photograph by Monoxyde, CC BY-SA 4.0. Commons description: Girl with Balloon seen in Domburg.",
+      "evidence_state": "abstract_preview_verified"
+    },
+    {
+      "id": "tetoux-balloon-photo",
+      "label": "Balloon Girl by Tetoux, Madrid (Commons)",
+      "locator": {
+        "kind": "url",
+        "value": "https://commons.wikimedia.org/wiki/File:Balloon_Girl_-_Tetoux_-_Bansky_-_Calle_de_Meson_de_Paredes_-_Madrid_01.jpg"
+      },
+      "citation_text": "Photograph by Javier Perez Montes (Nerve net), CC BY-SA 4.0. Commons description: mural by Tetoux based on Banksy's mural, Calle de Meson de Paredes, Madrid.",
+      "evidence_state": "abstract_preview_verified"
+    },
+    {
+      "id": "walled-off-photo",
+      "label": "The Walled Off Hotel and the Wall, Bethlehem (Commons)",
+      "locator": {
+        "kind": "url",
+        "value": "https://commons.wikimedia.org/wiki/File:The_Walled_Off_Hotel_and_the_Wall.jpg"
+      },
+      "citation_text": "Photograph by シャター, CC BY-SA 4.0. Commons description: the walled hotel and the segregation wall in Bethlehem.",
+      "evidence_state": "abstract_preview_verified"
+    }
+  ]
+}

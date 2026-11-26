@@ -41,6 +41,7 @@ cd graphloom/backend && uv run uvicorn app.main:app --host 127.0.0.1 --port 8000
 ## Use the workbench
 
 - Create or open a project; each project holds one ontology and graph.
+- Rename or delete a project from the project list.
 - **Model** mode edits classes, relation types, and attribute types, with derived hierarchy/domain/range edges.
 - **Instances** mode edits instances, relation assertions, and literal assertions; selecting a class filters its instances.
 - Switch between **Graph** and **Table** views; create from the explorer, inspect and edit on the right.

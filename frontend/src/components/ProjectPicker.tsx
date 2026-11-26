@@ -34,6 +34,30 @@ export default function ProjectPicker({ projects, error, onSelect, onCreated }: 
     }
   }
 
+  async function rename(project: ProjectSummary) {
+    const nextName = window.prompt("Rename project", project.name);
+    if (!nextName || !nextName.trim() || nextName.trim() === project.name) return;
+    try {
+      await api.renameProject(project.id, { name: nextName.trim() });
+      await onCreated();
+    } catch (caught) {
+      setFormError(caught instanceof ApiError ? caught.message : "Could not rename the project.");
+    }
+  }
+
+  async function remove(project: ProjectSummary) {
+    const confirmed = window.confirm(
+      `Delete "${project.name}" and all its data? This cannot be undone.`,
+    );
+    if (!confirmed) return;
+    try {
+      await api.deleteProject(project.id);
+      await onCreated();
+    } catch (caught) {
+      setFormError(caught instanceof ApiError ? caught.message : "Could not delete the project.");
+    }
+  }
+
   return (
     <main className="picker-shell">
       <header className="picker-header">
@@ -57,10 +81,16 @@ export default function ProjectPicker({ projects, error, onSelect, onCreated }: 
             </div>
           )}
           {projects.map((project) => (
-            <button
+            <div
               key={project.id}
               className="project-card"
+              role="button"
+              tabIndex={0}
+              style={{ cursor: "pointer" }}
               onClick={() => onSelect(project.id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") onSelect(project.id);
+              }}
             >
               <div className="project-card-title">
                 <strong>{project.name}</strong>
@@ -85,7 +115,27 @@ export default function ProjectPicker({ projects, error, onSelect, onCreated }: 
                   <dd>{project.counts.assertions}</dd>
                 </div>
               </dl>
-            </button>
+              <div className="project-card-actions">
+                <button
+                  className="mini"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void rename(project);
+                  }}
+                >
+                  Rename
+                </button>
+                <button
+                  className="mini"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void remove(project);
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           ))}
         </section>
 

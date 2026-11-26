@@ -1,0 +1,134 @@
+{
+  "instances": [
+    {
+      "id": "banksy",
+      "label": "Banksy",
+      "definition": "Anonymous England-based street artist whose identity is unconfirmed.",
+      "classes": ["artist"],
+      "notes": "Attribution node; agent-proposed case node."
+    },
+    {
+      "id": "tetoux",
+      "label": "Tetoux",
+      "definition": "Muralist named in the Commons description of the Madrid Balloon Girl.",
+      "classes": ["artist"]
+    },
+    {
+      "id": "girl-with-balloon",
+      "label": "Girl with Balloon",
+      "definition": "Stencil of a girl reaching toward a red heart-shaped balloon.",
+      "classes": ["street-artwork"],
+      "notes": "Widely reproduced motif; original date and place to verify.",
+      "sources": ["girl-domburg-photo"]
+    },
+    {
+      "id": "well-hung-lover",
+      "label": "Well Hung Lover",
+      "definition": "Mural on Frogmore Street, Bristol, painted in 2006.",
+      "classes": ["street-artwork"],
+      "sources": ["well-hung-lover-photo"]
+    },
+    {
+      "id": "paint-pot-angel",
+      "label": "Paint Pot Angel",
+      "definition": "Angel figure with a paint pot, displayed at Bristol Museum and Art Gallery.",
+      "classes": ["installation"],
+      "sources": ["paint-pot-angel-photo"]
+    },
+    {
+      "id": "walled-off-hotel",
+      "label": "The Walled Off Hotel",
+      "definition": "Hotel installation beside the separation wall in Bethlehem.",
+      "classes": ["installation"],
+      "notes": "Opening year to verify (widely reported as 2017).",
+      "sources": ["walled-off-photo"]
+    },
+    {
+      "id": "banksy-new-orleans",
+      "label": "Banksy work in New Orleans",
+      "definition": "A Banksy work in New Orleans, photographed in 2008; title not confirmed.",
+      "classes": ["street-artwork"],
+      "sources": ["drop-in-photographers-photo"]
+    },
+    {
+      "id": "tetoux-balloon-girl",
+      "label": "Balloon Girl (after Banksy, by Tetoux)",
+      "definition": "Mural by Tetoux based on Banksy's Balloon Girl, Madrid.",
+      "classes": ["street-artwork"],
+      "notes": "After Banksy; not an original Banksy.",
+      "sources": ["tetoux-balloon-photo"]
+    },
+    { "id": "motif-balloon", "label": "Red heart-shaped balloon", "definition": "A recurring balloon motif.", "classes": ["visual-motif"] },
+    { "id": "motif-girl", "label": "Girl figure", "definition": "A small figure reaching or gesturing.", "classes": ["visual-motif"] },
+    { "id": "motif-angel", "label": "Angel figure", "definition": "A winged figure.", "classes": ["visual-motif"] },
+    { "id": "motif-wall", "label": "Separation wall", "definition": "A barrier as visual and political surface.", "classes": ["visual-motif"] },
+    { "id": "trope-juxtaposition", "label": "Juxtaposition", "definition": "Placing unlike elements together so each reframes the other.", "classes": ["rhetorical-trope"] },
+    { "id": "trope-irony", "label": "Irony", "definition": "A gap between stated and implied meaning.", "classes": ["rhetorical-trope"] },
+    { "id": "trope-appropriation", "label": "Appropriation", "definition": "Reusing another image or work.", "classes": ["rhetorical-trope"] },
+    { "id": "trope-metaphor", "label": "Metaphor", "definition": "One thing figured in terms of another.", "classes": ["rhetorical-trope"] },
+    { "id": "trope-metonymy", "label": "Metonymy", "definition": "A part or attribute standing for a whole.", "classes": ["rhetorical-trope"] },
+    { "id": "trope-intertextuality", "label": "Intertextuality", "definition": "Meaning built by referencing other images or texts.", "classes": ["rhetorical-trope"] },
+    { "id": "trope-site", "label": "Site-specific intervention", "definition": "Meaning produced by a particular location.", "classes": ["rhetorical-trope"] },
+    { "id": "trope-institutional", "label": "Institutional critique", "definition": "Foregrounding the framing power of art institutions.", "classes": ["rhetorical-trope"] },
+    { "id": "trope-anonymity", "label": "Anonymity", "definition": "Refusal of authorial identity as a rhetorical condition.", "classes": ["rhetorical-trope"] },
+    { "id": "site-frogmore", "label": "Frogmore Street, Bristol", "definition": "Street in Bristol.", "classes": ["site"] },
+    { "id": "site-bristol-museum", "label": "Bristol Museum and Art Gallery (site)", "definition": "Museum site.", "classes": ["site"] },
+    { "id": "site-bethlehem", "label": "Bethlehem separation wall", "definition": "The separation wall in Bethlehem.", "classes": ["site"] },
+    { "id": "site-new-orleans", "label": "New Orleans", "definition": "City in Louisiana.", "classes": ["site"] },
+    { "id": "site-madrid", "label": "Calle de Meson de Paredes, Madrid", "definition": "Street in Madrid.", "classes": ["site"] },
+    { "id": "site-domburg", "label": "Domburg", "definition": "Town in the Netherlands.", "classes": ["site"] },
+    { "id": "inst-bristol-museum", "label": "Bristol Museum and Art Gallery", "definition": "Institution that displayed Paint Pot Angel.", "classes": ["institution"] },
+    { "id": "audience-street", "label": "Street passers-by", "definition": "An incidental public.", "classes": ["audience"] },
+    { "id": "audience-museum", "label": "Museum visitors", "definition": "A gallery public.", "classes": ["audience"] },
+    { "id": "discourse-public-space", "label": "Street art and public space", "definition": "Debate over art in shared space.", "classes": ["discourse"] },
+    { "id": "discourse-border", "label": "Borders and separation", "definition": "Debate over walls and borders.", "classes": ["discourse"] },
+    { "id": "discourse-institution", "label": "Institutional display of street art", "definition": "Debate over the museum framing of street art.", "classes": ["discourse"] },
+    {
+      "id": "reception-new-orleans-2008",
+      "label": "Photographing a Banksy work, New Orleans (2008)",
+      "definition": "A reception event documented by the 2008 Commons photograph.",
+      "classes": ["reception-event"],
+      "sources": ["drop-in-photographers-photo"]
+    }
+  ],
+  "relations": [
+    { "id": "well-hung-lover-artist", "source": "well-hung-lover", "type": "attributedTo", "target": "banksy" },
+    { "id": "well-hung-lover-site", "source": "well-hung-lover", "type": "sitedAt", "target": "site-frogmore" },
+    { "id": "well-hung-lover-irony", "source": "well-hung-lover", "type": "deploys", "target": "trope-irony", "notes": "Agent-proposed reading." },
+    { "id": "paint-pot-angel-artist", "source": "paint-pot-angel", "type": "attributedTo", "target": "banksy" },
+    { "id": "paint-pot-angel-inst", "source": "paint-pot-angel", "type": "institutionalContext", "target": "inst-bristol-museum" },
+    { "id": "paint-pot-angel-site", "source": "paint-pot-angel", "type": "sitedAt", "target": "site-bristol-museum" },
+    { "id": "paint-pot-angel-angel", "source": "paint-pot-angel", "type": "depicts", "target": "motif-angel" },
+    { "id": "paint-pot-angel-critique", "source": "paint-pot-angel", "type": "deploys", "target": "trope-institutional", "notes": "Agent-proposed reading." },
+    { "id": "paint-pot-angel-aud", "source": "paint-pot-angel", "type": "addresses", "target": "audience-museum" },
+    { "id": "walled-off-artist", "source": "walled-off-hotel", "type": "attributedTo", "target": "banksy" },
+    { "id": "walled-off-site", "source": "walled-off-hotel", "type": "sitedAt", "target": "site-bethlehem" },
+    { "id": "walled-off-wall", "source": "walled-off-hotel", "type": "depicts", "target": "motif-wall" },
+    { "id": "walled-off-discourse", "source": "walled-off-hotel", "type": "respondsTo", "target": "discourse-border" },
+    { "id": "walled-off-trope", "source": "walled-off-hotel", "type": "deploys", "target": "trope-site" },
+    { "id": "girl-artist", "source": "girl-with-balloon", "type": "attributedTo", "target": "banksy" },
+    { "id": "girl-balloon", "source": "girl-with-balloon", "type": "depicts", "target": "motif-balloon" },
+    { "id": "girl-figure", "source": "girl-with-balloon", "type": "depicts", "target": "motif-girl" },
+    { "id": "girl-juxtaposition", "source": "girl-with-balloon", "type": "deploys", "target": "trope-juxtaposition", "notes": "Agent-proposed reading." },
+    { "id": "girl-site", "source": "girl-with-balloon", "type": "sitedAt", "target": "site-domburg" },
+    { "id": "girl-aud", "source": "girl-with-balloon", "type": "addresses", "target": "audience-street" },
+    { "id": "nola-artist", "source": "banksy-new-orleans", "type": "attributedTo", "target": "banksy" },
+    { "id": "nola-site", "source": "banksy-new-orleans", "type": "sitedAt", "target": "site-new-orleans" },
+    { "id": "nola-discourse", "source": "banksy-new-orleans", "type": "respondsTo", "target": "discourse-public-space" },
+    { "id": "rec-reception", "source": "reception-new-orleans-2008", "type": "receptionOf", "target": "banksy-new-orleans" },
+    { "id": "tetoux-artist", "source": "tetoux-balloon-girl", "type": "attributedTo", "target": "tetoux" },
+    { "id": "tetoux-appropriates", "source": "tetoux-balloon-girl", "type": "appropriates", "target": "girl-with-balloon" },
+    { "id": "tetoux-site", "source": "tetoux-balloon-girl", "type": "sitedAt", "target": "site-madrid" },
+    { "id": "tetoux-trope", "source": "tetoux-balloon-girl", "type": "deploys", "target": "trope-appropriation", "notes": "Agent-proposed reading." },
+    { "id": "banksy-practises-anonymity", "source": "banksy", "type": "practises", "target": "trope-anonymity", "notes": "Agent-proposed reading." }
+  ],
+  "attribute_values": [
+    { "id": "well-hung-lover-year", "subject": "well-hung-lover", "attribute": "year", "value": 2006 },
+    { "id": "girl-medium", "subject": "girl-with-balloon", "attribute": "medium", "value": "stencil" },
+    { "id": "walled-off-year", "subject": "walled-off-hotel", "attribute": "year", "value": 2017, "notes": "Widely reported; verify." },
+    { "id": "nola-year", "subject": "banksy-new-orleans", "attribute": "year", "value": 2008 },
+    { "id": "well-hung-lover-function", "subject": "well-hung-lover", "attribute": "rhetoricalFunction", "value": "site-specific irony", "notes": "Agent-proposed reading." },
+    { "id": "walled-off-function", "subject": "walled-off-hotel", "attribute": "rhetoricalFunction", "value": "border critique", "notes": "Agent-proposed reading." },
+    { "id": "paint-pot-angel-function", "subject": "paint-pot-angel", "attribute": "rhetoricalFunction", "value": "institutional framing", "notes": "Agent-proposed reading." }
+  ]
+}

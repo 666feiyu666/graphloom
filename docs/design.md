@@ -145,6 +145,8 @@ Prefix: `/api/v1`. Generate OpenAPI from Pydantic models and expose interactive 
 | `GET /projects` | List projects |
 | `POST /projects` | Create a project |
 | `GET /projects/{id}` | Project metadata and current version |
+| `PATCH /projects/{id}` | Rename or re-describe a project |
+| `DELETE /projects/{id}` | Delete a project and its data |
 | `GET /projects/{id}/schema` | Classes, relation/attribute types, warnings |
 | `GET /projects/{id}/state` | Full current state |
 | `GET /projects/{id}/objects?kind=…&q=…&cursor=…` | Search/list objects |
